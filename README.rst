@@ -1,4 +1,4 @@
-eReuse.org Workbench Lite
+Workbench Lite
 #########################
 A minimalist, open source tool to capture hardware data about computers generating a report on JSON file.
 
