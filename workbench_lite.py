@@ -40,7 +40,7 @@ class WorkbenchLite:
         with open('snapshot.json', 'w') as file:
             json.dump(snapshot, file, indent=2)
 
-        print('Snapshot json saved!!')
+        print('Snapshot json saved!')
 
 
 if __name__ == '__main__':
@@ -48,3 +48,4 @@ if __name__ == '__main__':
     workbench_lite = WorkbenchLite()
     print("Start WB Lite!")
     workbench_lite.generate_snapshot()
+    print("Finished WB Lite!")
