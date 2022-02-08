@@ -1,3 +1,4 @@
+import os
 import subprocess
 import json
 import uuid
@@ -6,8 +7,13 @@ from datetime import datetime
 
 
 class WorkbenchLite:
+    """ Create a hardware report of your computer with components using dmidecode package.
+        You must run this software as root / sudo.
+    """
 
     def __init__(self):
+        if os.geteuid() != 0:
+            raise EnvironmentError('Execute WorkbenchLite as root / sudo.')
         self.type = 'Snapshot'
         self.timestamp = datetime.now()
         self.uuid = uuid.uuid4()
