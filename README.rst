@@ -35,7 +35,11 @@ called 'snapshot.json'.
 Testing
 *******
 1. Clone this repository and go to the repository main folder.
-2. Work in progress..
+2. Execute on project folder:
+
+.. code-block::
+
+    make test
 
 Code Ownership
 *****************
