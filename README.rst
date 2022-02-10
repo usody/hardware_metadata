@@ -39,7 +39,7 @@ Testing
 
 .. code-block::
 
-    make test
+    sudo make test
 
 Code Ownership
 *****************
