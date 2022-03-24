@@ -48,7 +48,7 @@ fi
 
 wb_dir="${WB_PATH}/chroot/opt/workbench"
 mkdir -p "${wb_dir}"
-mv workbench_lite.py "${wb_dir}"
+cp workbench_lite.py "${wb_dir}"
 # private repo
 #git clone https://github.com/usody/workbench-lite.git "${wb_temp}"
 # Select workbench branch to build
