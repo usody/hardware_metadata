@@ -1,0 +1,7 @@
+python3
+python3-dev
+dmidecode
+smartmontools
+hwinfo
+#cifs-utils
+#grub2-common
