@@ -2,9 +2,11 @@
 
 set -x
 
+# TODO encapsulate into functions
+
 # TODO verify sudo situation
 
-hostname=workbench-live
+hostname='workbench-live'
 
 # detect non root user without sudo
 if [ "$(id -u)" -ne 0 ] && id $USER | grep -qv sudo; then
@@ -13,18 +15,24 @@ if [ "$(id -u)" -ne 0 ] && id $USER | grep -qv sudo; then
 # detect user with sudo or already on sudo src https://serverfault.com/questions/568627/can-a-program-tell-it-is-being-run-under-sudo/568628#568628
 elif [ "$(id -u)" -ne 0 ] || [ -n "${SUDO_USER}" ]; then
   SUDO='sudo'
+  # jump to current dir where the script is so relative links work
+  cd "$(dirname "${0}")"
   # workbench working directory to build the iso
-  WB_PATH="/home/$USER/workbench_live_dev"
+  WB_PATH="wbiso"
 # detect pure root
 elif [ "$(id -u)" -e 0 ]; then
   SUDO=''
   WB_PATH="/opt/workbench_live_dev"
 fi
 
-# we assume that the bootstrap is going to be build with the
-#   same version of debian being executed because some files
+# version of debian the bootstrap is going to build
+#   if no VERSION_CODENAME is specified we assume that the bootstrap is going to
+#   be build with the same version of debian being executed because some files
 #   are copied from our root system
-#. /etc/os-release
+if [ -z "${VERSION_CODENAME}" ]; then
+  . /etc/os-release
+  echo "TAKING OS-RELEASE FILE"
+fi
 
 mkdir -p ${WB_PATH}
 
@@ -38,22 +46,22 @@ ${SUDO} apt-get install -y \
   grub-efi-amd64-bin \
   mtools
 
-# version of debian the bootstrap is going to build
-VERSION_CODENAME="buster"
 
 chroot_path="${WB_PATH}/chroot"
 if [ ! -d "${chroot_path}" ]; then
   ${SUDO} debootstrap --arch=amd64 --variant=minbase ${VERSION_CODENAME} ${WB_PATH}/chroot http://deb.debian.org/debian/
+  # TODO does this make sense?
+  ${SUDO} chown -R "${USER}:" ${WB_PATH}/chroot
 fi
 
 wb_dir="${WB_PATH}/chroot/opt/workbench"
 mkdir -p "${wb_dir}"
-cp workbench_lite.py "${wb_dir}"
+cp ../workbench_lite.py "${wb_dir}"
 # private repo
 #git clone https://github.com/usody/workbench-lite.git "${wb_temp}"
 # Select workbench branch to build
 # git checkout testing
-cd -
+#cd -
 
 # non interactive chroot -> src https://stackoverflow.com/questions/51305706/shell-script-that-does-chroot-and-execute-commands-in-chroot
 ${SUDO} chroot ${WB_PATH}/chroot <<END
@@ -101,7 +109,7 @@ apt-get clean
 # TODO hardcoded password
 # TODO this is not working
 # TODO https://unix.stackexchange.com/questions/81240/manually-generate-password-for-etc-shadow
-echo "wb:workbench" | chpasswd
+#echo "wb:workbench" | chpasswd
 END
 
 
@@ -204,15 +212,17 @@ grub-mkstandalone \
     dd if=/dev/zero of=efiboot.img bs=1M count=20 && \
     mkfs.vfat efiboot.img && \
     mmd -i efiboot.img efi efi/boot && \
-    mcopy -vi efiboot.img ${WB_PATH}/tmp/bootx64.efi ::efi/boot/
+    mcopy -vi efiboot.img ../../../tmp/bootx64.efi ::efi/boot/
 )
 
 # Creating ISO
 
+wbiso_file="${WB_PATH}/debian-wb-lite.iso"
+
 xorriso \
   -as mkisofs \
   -iso-level 3 \
-  -o "${WB_PATH}/debian-wb-lite.iso" \
+  -o "${wbiso_file}" \
   -full-iso9660-filenames \
   -volid "DEBIAN_CUSTOM" \
   -isohybrid-mbr /usr/lib/ISOLINUX/isohdpfx.bin \
@@ -228,6 +238,8 @@ xorriso \
     -isohybrid-gpt-basdat \
   -append_partition 2 0xef ${WB_PATH}/staging/EFI/boot/efiboot.img \
   "${WB_PATH}/staging"
+
+printf "\n\n  image generated in build/${wbiso_file}\n\n"
 
 # Execute iso
 # qemu-system-x86_64 -enable-kvm -m 2G -vga qxl -netdev user,id=wan -device virtio-net,netdev=wan,id=nic1 -drive file=debian-wb-lite.iso,cache=none,if=virtio;

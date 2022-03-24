@@ -1,3 +1,5 @@
+# ignore local generated files for iso build
+build/wbiso
 # Byte-compiled / optimized / DLL files
 __pycache__/
 *.py[cod]
