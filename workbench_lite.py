@@ -127,7 +127,7 @@ class WorkbenchLite:
 
         # Generate and save snapshot
         snapshot = {
-            'timestamp': str(timestamp.strftime("%Y %m %d %H:%M:%S")),
+            'timestamp': str(timestamp),
             'type': 'Snapshot',
             'uuid': str(self.snapshot_uuid),
             'wbid': wbid,
@@ -136,9 +136,9 @@ class WorkbenchLite:
             'data': snapshot_data
         }
 
-        json_file = '{date}_{wbid}_WBv{version}_snapshot.json'.format(
-                                                                date=timestamp.strftime("%Y-%m-%d-%H:%M:%S"),
-                                                                wbid=wbid, version=str(self.version))
+        json_file = '{date}_{wbid}_snapshot.json'.format(
+                                                    date=timestamp.strftime("%Y-%m-%d_%Hh%Mm%Ss"),
+                                                    wbid=wbid)
         with open(json_file, 'w') as file:
             json.dump(snapshot, file, indent=2)
 
