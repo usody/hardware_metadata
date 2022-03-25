@@ -15,5 +15,8 @@ cleanBuild:
 	# TODO hardcoded
 	rm -rf staging/live/filesystem.squashfs
 
+run:
+	python3 workbench_lite.py
+
 test:
 	python3 test.py
