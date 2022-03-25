@@ -5,6 +5,8 @@ import uuid
 
 from datetime import datetime
 
+import requests
+
 
 class WorkbenchLite:
     """ Create a hardware report of your computer with components using dmidecode package.
@@ -33,9 +35,9 @@ class WorkbenchLite:
         proc.wait()
         if proc.returncode < 0:
             print('[ERROR] DMIDECODE failed execution with output: ', dmi_errors, '\r')
-            return str(dmi_errors.decode('utf8'))
+            return str(dmi_errors)
 
-        dmidecode_data = str(dmi_output.decode('utf8'))
+        dmidecode_data = dmi_output.decode('utf8')
 
         print('[INFO] DMIDECODE successfully completed. \r')
         return dmidecode_data
@@ -55,22 +57,19 @@ class WorkbenchLite:
                 if disk['type'] == 'disk':
                     smart_cmd = ["smartctl -x --json=cosviu /dev/" + disk['kname']]
                     proc2 = subprocess.Popen(smart_cmd, shell=True, stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
-                    output_smart, errors_smart = proc2.communicate()
+                    smart_output, smart_errors = proc2.communicate()
                     proc2.wait()
-                    if proc2.returncode >= 0:
-                        smart_info = json.loads(output_smart)
-                        smart_data.append(smart_info)
-                        # TODO fix if json loads fails
-                        # smart_data.append(str(output_smart))
-                    elif "UNRECOGNIZED OPTION" in output_smart.decode('utf8'):
+                    if proc2.returncode == 0:
+                        smart_data.append(json.loads(smart_output))
+                    elif "UNRECOGNIZED OPTION" in smart_output.decode('utf8'):
                         cmd2 = ["smartctl -x /dev/" + disk['kname']]
                         proc2 = subprocess.Popen(cmd2, shell=True, stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
-                        output_smart2, errors2 = proc2.communicate()
+                        output_smart2, errors_smart2 = proc2.communicate()
                         proc2.wait()
                         smart_data.append(output_smart2.decode('utf8'))
                     else:
-                        smart_data.append(errors_smart.decode('utf8'))
-
+                        print('[ERROR] SMARTCTL failed execution with output: ', smart_errors, '\r')
+                        smart_data.append(str(smart_errors))
         else:
             print('[ERROR] Getting disks information failed with output: ', errors_lsblk, '\r')
             return [errors_lsblk]
@@ -99,12 +98,13 @@ class WorkbenchLite:
         proc = subprocess.Popen(lshw_command, shell=True, stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
         lshw_output, lshw_errors = proc.communicate()
         proc.wait()
-
         if proc.returncode < 0:
             print('[ERROR] HWINFO failed execution with output: ', lshw_errors, '\r')
             return lshw_errors.decode('utf8')
-
-        lshw_data = json.loads(lshw_output)
+        elif "WARNING" in lshw_output.decode('utf8'):
+            lshw_data = lshw_output.decode('utf8')
+        else:
+            lshw_data = json.loads(lshw_output)
 
         print('[INFO] LSHW successfully completed. \r')
         return lshw_data
@@ -113,7 +113,7 @@ class WorkbenchLite:
         """ Getting hardware data and generate snapshot file (json)."""
         # Generate WB ID base on snapshot uuid value
         wbid = self.generate_wbid(self.snapshot_uuid)
-        print('[INFO] | WBID | =>', wbid, '\r')
+        print('[WBID]', wbid, '\r')
 
         # Get hardware data
         lshw_data = self.get_lshw_data()
@@ -123,7 +123,7 @@ class WorkbenchLite:
         snapshot_data = {'lshw': lshw_data, 'dmidecode': dmi_data, 'hwinfo': hwinfo_data, 'smart': smart_data}
 
         # Generate timestamp
-        timestamp = datetime.now().strftime("%Y-%m-%d-%H:%M:%S")
+        timestamp = datetime.now()
 
         # Generate and save snapshot
         snapshot = {
@@ -136,20 +136,43 @@ class WorkbenchLite:
             'data': snapshot_data
         }
 
-        json_file = '{date}_{wbid}_WBv{version}_snapshot.json'.format(
-                                                                date=timestamp,
-                                                                wbid=wbid, version=str(self.version))
+        json_file = '{date}_{wbid}_snapshot.json'.format(
+                                                    date=timestamp.strftime("%Y-%m-%d_%Hh%Mm%Ss"),
+                                                    wbid=wbid)
         with open(json_file, 'w') as file:
             json.dump(snapshot, file, indent=2)
 
         print('[INFO] Snapshot JSON successfully saved. \r')
+        return snapshot
+
+    def submit_snapshot(self, snapshot):
+        domain = 'https://api.testing.usody.com'
+        url = domain + '/usodybeta/actions/'
+        token = ''
+        post_headers = {'Authorization': 'Basic ' + token, 'Content-type': 'application/json'}
+        snapshot_json = json.dumps(snapshot)
+
+        try:
+            response = requests.post(url, headers=post_headers, data=snapshot_json)
+            if response.status_code == 201:
+                print('[INFO] Snapshot Uploaded. Device page: ', domain + response.json()['device']['url'])
+                return 0
+            else:
+                r = response.json()
+                print('[ERROR] We could not auto-upload the device. Request error:',
+                    r['code'], '-', r['type'], '-', r['message'])
+                return r
+        except Exception as e:
+            print('[ERROR] Request exception: ', e)
+            return -1
 
 
 if __name__ == '__main__':
     workbench_lite = WorkbenchLite()
     print('[INFO] ---- Starting Workbench ---- \r')
     print('[VERSION]', workbench_lite.version, '\r')
-    workbench_lite.generate_snapshot()
+    snapshot = workbench_lite.generate_snapshot()
+    workbench_lite.submit_snapshot(snapshot)
     print('[INFO] ---- Workbench finished ---- \r')
 
 
