@@ -3,5 +3,6 @@ python3-dev
 dmidecode
 smartmontools
 hwinfo
+lshw
 #cifs-utils
 #grub2-common
