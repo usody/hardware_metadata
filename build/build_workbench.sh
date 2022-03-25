@@ -138,7 +138,7 @@ ${SUDO} mksquashfs \
   ${WB_PATH}/chroot \
   ${WB_PATH}/staging/live/filesystem.squashfs \
   ${DEBUG_SQUASHFS_ARGS} \
-  -noappend -e boot \
+  -noappend -e boot
 
 # Copy kernel and initramfs
 cp ${WB_PATH}/chroot/boot/vmlinuz-* \
