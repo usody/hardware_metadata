@@ -72,6 +72,8 @@ echo "${hostname}" > /etc/hostname
 # Figure out which Linux Kernel you want in the live environment.
 #   apt-cache search linux-image
 
+backports_repo='deb http://deb.debian.org/debian ${VERSION_CODENAME}-backports main contrib'
+printf "\${backports_repo}" > /etc/apt/sources.list.d/backports.list
 
 # Installing packages
 apt-get update && \
@@ -79,7 +81,6 @@ apt-get install -y --no-install-recommends \
   linux-image-amd64 \
   live-boot \
   systemd-sysv
-
 
 ### START workbench_lite installation
 
@@ -94,12 +95,16 @@ systemctl enable acpid
 echo "/bin/systemctl poweroff --force --force --force" >/etc/acpi/powerbtn-acpi-support.sh
 ### END workbench-live installation
 
+# other utilities
+apt-get install -t ${VERSION_CODENAME}-backports lshw
+
 # first line is workbench requirements.debian.txt
 apt-get install --no-install-recommends \
   python3 python3-dev dmidecode smartmontools hwinfo \
   sudo \
   curl openssh-client \
   less \
+  jq \
   nano vim-tiny && \
 apt-get clean
 
@@ -110,6 +115,7 @@ apt-get clean
 # TODO this is not working
 # TODO https://unix.stackexchange.com/questions/81240/manually-generate-password-for-etc-shadow
 #echo "wb:workbench" | chpasswd
+echo -e 'workbench\nworkbench' | passwd
 END
 
 
@@ -122,12 +128,18 @@ mkdir -p ${WB_PATH}/tmp
 
 # Compress chroot folder
 
+# Faster squashfs when debugging -> src https://forums.fedoraforum.org/showthread.php?284366-squashfs-wo-compression-speed-up
+if [ "${DEBUG}" ]; then
+  DEBUG_SQUASHFS_ARGS='-noI -noD -noF -noX'
+fi
+
 # why squashfs -> https://unix.stackexchange.com/questions/163190/why-do-liveusbs-use-squashfs-and-similar-file-systems
 # noappend option needed to avoid this situation -> https://unix.stackexchange.com/questions/80447/merging-preexisting-source-folders-in-mksquashfs
 ${SUDO} mksquashfs \
   ${WB_PATH}/chroot \
   ${WB_PATH}/staging/live/filesystem.squashfs \
-  -noappend -e boot
+  ${DEBUG_SQUASHFS_ARGS} \
+  -noappend -e boot \
 
 # Copy kernel and initramfs
 cp ${WB_PATH}/chroot/boot/vmlinuz-* \
@@ -136,6 +148,7 @@ cp ${WB_PATH}/chroot/boot/initrd.img-* \
   ${WB_PATH}/staging/live/initrd
 
 # boot grub
+#   TIMEOUT 60 means 6 seconds :)
 cat <<EOF >${WB_PATH}/staging/isolinux/isolinux.cfg
 UI vesamenu.c32
 
