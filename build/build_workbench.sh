@@ -110,11 +110,10 @@ apt-get clean
 
 # Set up root user & exit
 
+# this is the root password
 # Method3: Use echo
-# TODO hardcoded password
-# TODO this is not working
-# TODO https://unix.stackexchange.com/questions/81240/manually-generate-password-for-etc-shadow
-#echo "wb:workbench" | chpasswd
+#   src https://www.systutorials.com/changing-linux-users-password-in-one-command-line/
+#   TODO hardcoded password
 echo -e 'workbench\nworkbench' | passwd
 END
 
