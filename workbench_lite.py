@@ -14,8 +14,8 @@ class WorkbenchLite:
     """
 
     def __init__(self):
-        #if os.geteuid() != 0:
-            #raise EnvironmentError('[ERROR] Execute WorkbenchLite as root / sudo. \r')
+        if os.geteuid() != 0:
+            raise EnvironmentError('[ERROR] Execute WorkbenchLite as root / sudo. \r')
         self.type = 'Snapshot'
         self.snapshot_uuid = uuid.uuid4()
         self.software = 'WorkbenchLite'
