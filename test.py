@@ -9,7 +9,7 @@ class TestWorkbenchLite(unittest.TestCase):
     workbench_lite = WorkbenchLite()
 
     @patch('sys.stdout', new_callable=StringIO)
-    def test_1_generate_snapshot(self, stdout):
+    def test_generate_snapshot__check_stdout(self, stdout):
         """
         Test to check if function generate snapshot works properly.
         """

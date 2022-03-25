@@ -2,35 +2,42 @@ Workbench Lite
 #########################
 A minimalist, open source tool to capture hardware data about computers generating a report on JSON file.
 
-By default Workbench lite generates a report of the hardware
-characteristics of the computer, so it is safe to use, using dmidecode package.
+By default Workbench Lite generates a report of the hardware
+characteristics of the computer using lshw, dmidecode, hwinfo and smartmontools packages.
 
 You must run this software as root / sudo.
 
 Installation
 ************
-Workbench lite should work in any Linux as long as it has the dmidecode package.
+Workbench lite should work in any Linux as long as it has the packages below.
 
 1. Clone this repository and go to the repository main folder.
 
-2. Make sure we have the dmidecode package installed. On Debian systems execute:
+2. Make sure we have debian required packages installed. Install the `debian packages <requirements.debian.txt>`_, like
+   the following way:
 
 .. code-block::
 
-    sudo dmidecode --version
+    cat requirements.debian.txt | sudo xargs apt install -y.
+
+2. Make sure we have python required packages installed. Install the `python packages <requirements.txt>`_, like
+   the following way:
+
+.. code-block::
+
+    pip3 install -r requirements.txt
+
 
 Usage
 *****
-Execute Workbench lite through the CLI or directly in Python.
-
-Execute like sudo:
+Execute Workbench Lite like sudo:
 
 .. code-block::
 
     sudo python3 <path>/workbench_lite.py
 
 At the end of the execution, it generates a json file with the collected information,
-called 'snapshot.json'.
+called '*{date}_{wbid}_WBv{version}_snapshot.json*'.
 
 Testing
 *******
@@ -39,7 +46,7 @@ Testing
 
 .. code-block::
 
-    make test
+    sudo make test
 
 Code Ownership
 *****************
