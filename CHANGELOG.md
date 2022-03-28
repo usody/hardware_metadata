@@ -14,8 +14,8 @@ and this project adheres to [Calendar Versioning](https://calver.org/#scheme) sc
 
 ## [Unreleased]
 - [added] improve resilience with try catch when data is collected
-- 
-
+- [added] bootiso makefile function
+- [added] autologin on debian starts
 
 ## [2022.03.00-alpha] - 2022/03/25
 
