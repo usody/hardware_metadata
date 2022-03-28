@@ -37,7 +37,7 @@ Execute Workbench Lite like sudo:
     sudo python3 <path>/workbench_lite.py
 
 At the end of the execution, it generates a json file with the collected information,
-called '*{date}_{wbid}_WBv{version}_snapshot.json*'.
+called '*{date}_{wbid}_snapshot.json*'.
 
 Testing
 *******
