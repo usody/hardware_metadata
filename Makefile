@@ -20,3 +20,7 @@ run:
 
 test:
 	python3 test.py
+
+bootiso:
+	qemu-system-x86_64 -enable-kvm -m 2G -vga qxl -netdev user,id=wan -device virtio-net,netdev=wan,id=nic1 -drive file=build/wbiso/debian-wb-lite.iso,cache=none,if=virtio;
+
