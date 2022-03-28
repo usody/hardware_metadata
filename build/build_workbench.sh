@@ -57,11 +57,10 @@ fi
 wb_dir="${WB_PATH}/chroot/opt/workbench"
 mkdir -p "${wb_dir}"
 cp ../workbench_lite.py "${wb_dir}"
-# private repo
-#git clone https://github.com/usody/workbench-lite.git "${wb_temp}"
-# Select workbench branch to build
-# git checkout testing
-#cd -
+cp ../requirements.txt "${wb_dir}"
+cp ../requirements.debian.txt "${wb_dir}"
+cp files/.profile "${WB_PATH}/chroot/root/"
+
 
 # non interactive chroot -> src https://stackoverflow.com/questions/51305706/shell-script-that-does-chroot-and-execute-commands-in-chroot
 ${SUDO} chroot ${WB_PATH}/chroot <<END
@@ -82,25 +81,34 @@ apt-get install -y --no-install-recommends \
   live-boot \
   systemd-sysv
 
+apt-get install python3-pip
+
 ### START workbench_lite installation
 
 echo 'Install Workbench'
+# Install python requirements
+pip3 install -r /opt/workbench/requirements.txt
+# Install debian requirements
+cat /opt/workbench/requirements.debian.txt | xargs apt install -y
 
-#Disable systemd-logind acpi handling
-echo '[Login]' >/etc/systemd/logind.conf
-echo "HandlePowerKey=ignore" >>/etc/systemd/logind.conf
-systemctl enable acpid
-
-#Override acpid power handling
-echo "/bin/systemctl poweroff --force --force --force" >/etc/acpi/powerbtn-acpi-support.sh
-### END workbench-live installation
-
-# other utilities
+# install lshw B02.19 utility using backports
 apt-get install -t ${VERSION_CODENAME}-backports lshw
 
-# first line is workbench requirements.debian.txt
+# Autologin root user
+# src https://wiki.archlinux.org/title/getty#Automatic_login_to_virtual_console
+mkdir -p /etc/systemd/system/getty@tty1.service.d/
+touch /etc/systemd/system/getty@tty1.service.d/override.conf
+echo "[Service]" >/etc/systemd/system/getty@tty1.service.d/override.conf
+echo "ExecStart=" >>/etc/systemd/system/getty@tty1.service.d/override.conf
+echo "ExecStart=-/sbin/agetty --autologin root --noclear %I $TERM" >>/etc/systemd/system/getty@tty1.service.d/override.conf
+
+systemctl enable getty@tty1.service
+
+### END workbench-live installation
+
+
+# other debian utilities
 apt-get install --no-install-recommends \
-  python3 python3-dev dmidecode smartmontools hwinfo \
   sudo \
   curl openssh-client \
   less \
@@ -114,7 +122,8 @@ apt-get clean
 # Method3: Use echo
 #   src https://www.systutorials.com/changing-linux-users-password-in-one-command-line/
 #   TODO hardcoded password
-echo -e 'workbench\nworkbench' | passwd
+echo -e 'workbench\nworkbench' | passwd root
+
 END
 
 
@@ -153,7 +162,7 @@ UI vesamenu.c32
 
 MENU TITLE Boot Menu
 DEFAULT linux
-TIMEOUT 60
+TIMEOUT 10
 MENU RESOLUTION 640 480
 MENU COLOR border       30;44   #40ffffff #a0000000 std
 MENU COLOR title        1;36;44 #9033ccff #a0000000 std
@@ -254,4 +263,4 @@ xorriso \
 printf "\n\n  image generated in build/${wbiso_file}\n\n"
 
 # Execute iso
-# qemu-system-x86_64 -enable-kvm -m 2G -vga qxl -netdev user,id=wan -device virtio-net,netdev=wan,id=nic1 -drive file=debian-wb-lite.iso,cache=none,if=virtio;
+# 	qemu-system-x86_64 -enable-kvm -m 2G -vga qxl -netdev user,id=wan -device virtio-net,netdev=wan,id=nic1 -drive file=build/wbiso/debian-wb-lite.iso,cache=none,if=virtio;
