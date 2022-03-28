@@ -127,8 +127,9 @@ class WorkbenchLite:
                     proc_smart = subprocess.Popen(smart_cmd, shell=True, stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
                     smart_output, smart_errors = proc_smart.communicate()
                     proc_smart.wait()
-
-                    if proc_smart.returncode == 0:
+                    # TODO improve disk data list with one key for disk
+                    # TODO skip getting the usb disk where live iso was mounted
+                    if proc_smart.returncode >= 0:
                         try:
                             disk_data = json.loads(smart_output.decode('utf8'))
                         except Exception as e:
@@ -136,18 +137,10 @@ class WorkbenchLite:
                             print('[EXCEPTION] SMART on', disk['kname'], 'exception', e, '\r')
                         else:
                             smart_data.append(disk_data)
-                            print('[INFO] SMART on', disk['kname'], 'completed. \r')
-                    # TODO better review how to collect border cases
-                    elif "UNRECOGNIZED OPTION" in smart_output.decode('utf8'):
-                        cmd2 = ["smartctl -x /dev/" + disk['kname']]
-                        proc_smart2 = subprocess.Popen(cmd2, shell=True, stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
-                        output_smart2, errors_smart2 = proc_smart2.communicate()
-                        proc_smart2.wait()
-                        smart_data.append(output_smart2.decode('utf8'))
+                            print('[INFO] SMART on', disk['kname'], 'successfully completed. \r')
                     else:
                         print('[ERROR] SMART failed on', disk['kname'], 'with output:', smart_errors, '\r')
                         smart_data.append(str(smart_errors))
-            print('[INFO] SMART successfully completed. \r')
         else:
             print('[ERROR] Getting disks information failed with output:', errors_lsblk, '\r')
             return [errors_lsblk]
@@ -156,6 +149,7 @@ class WorkbenchLite:
 
     def generate_snapshot(self):
         """ Getting hardware data and generate snapshot file (json)."""
+
         # Generate WB ID base on snapshot uuid value
         wbid = self.generate_wbid(self.snapshot_uuid)
         print('[WBID]', wbid, '\r')
