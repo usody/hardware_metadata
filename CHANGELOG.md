@@ -2,22 +2,26 @@
 All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/)
-and this project adheres to [Calendar Versioning](https://calver.org/#scheme) scheme (`YYYY.MM.PATCH`).
+and this project adheres to [Calendar Versioning](https://calver.org/#scheme) scheme (`YYYY.0M.PATCH`).
 
 ## prod
 [2022.03.0-alpha]
 
 ## preprod
-[2022.03.0-alpha]
+[2022.03.1-alpha]
 
 ----
 
 ## [Unreleased]
+
+## [2022.03.1-alpha] - 2022/03/30
+
 - [added] improve resilience with try catch when data is collected
 - [added] bootiso makefile function
 - [added] autologin on debian starts
+- [fixed] minor changes in getting smart info
 
-## [2022.03.00-alpha] - 2022/03/25
+## [2022.03.0-alpha] - 2022/03/25
 
 - [added] lshw package 
 - [added] build script to generate live ISO image
