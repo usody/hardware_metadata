@@ -4,5 +4,3 @@ dmidecode
 smartmontools
 hwinfo
 lshw
-#cifs-utils
-#grub2-common
