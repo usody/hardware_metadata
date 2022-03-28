@@ -2,10 +2,9 @@ import os
 import subprocess
 import json
 import uuid
+import requests
 
 from datetime import datetime
-
-import requests
 
 
 class WorkbenchLite:
@@ -18,8 +17,8 @@ class WorkbenchLite:
             raise EnvironmentError('[ERROR] Execute WorkbenchLite as root / sudo. \r')
         self.type = 'Snapshot'
         self.snapshot_uuid = uuid.uuid4()
-        self.software = 'WorkbenchLite'
-        self.version = '2022.03'
+        self.software = 'Workbench'
+        self.version = '2022.03.00'
 
     def generate_wbid(self, uuid: uuid):
         from hashids import Hashids
@@ -27,54 +26,59 @@ class WorkbenchLite:
         # TODO short hash result to 6 characters
         return Hashids('', min_length=5, alphabet=ALPHABET).encode(int(uuid))
 
+    def get_lshw_data(self):
+        """Get DMI table information using dmidecode command."""
+        lshw_command = ['lshw -json']
+        proc = subprocess.Popen(lshw_command, shell=True, stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
+        lshw_output, lshw_errors = proc.communicate()
+        proc.wait()
+
+        lshw_data = ''
+        if proc.returncode >= 0:
+            try:
+                lshw_data = json.loads(lshw_output.decode('utf8'))
+            except Exception as e:
+                lshw_data = lshw_output.decode('utf8')
+                print('[EXCEPTION] LSHW exception', e, '\r')
+            else:
+                print('[INFO] LSHW successfully completed. \r')
+        elif proc.returncode < 0:
+                try:
+                    lshw_data = lshw_errors.decode('utf8')
+                except Exception as e:
+                    lshw_data = str(e)
+                    print('[EXCEPTION]', e, '\r')
+                else:
+                    print('[ERROR] LSHW failed execution with output: ', lshw_errors, '\r')
+
+        return lshw_data
+
     def get_dmi_data(self):
         """Get DMI table information using dmidecode command."""
         dmi_command = ['dmidecode']
         proc = subprocess.Popen(dmi_command, shell=True, stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
         dmi_output, dmi_errors = proc.communicate()
         proc.wait()
-        if proc.returncode < 0:
-            print('[ERROR] DMIDECODE failed execution with output: ', dmi_errors, '\r')
-            return str(dmi_errors)
 
-        dmidecode_data = dmi_output.decode('utf8')
-
-        print('[INFO] DMIDECODE successfully completed. \r')
-        return dmidecode_data
-
-    def get_smart_data(self):
-        """Execute dmidecode command."""
-        # TODO validate if get NAME or KNAME of disks
-        cmd_lsblk = ["lsblk -Jdo KNAME,TYPE"]
-        proc = subprocess.Popen(cmd_lsblk, shell=True, stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
-        output_lsblk, errors_lsblk = proc.communicate()
-        proc.wait()
-        disk_info = json.loads(output_lsblk)
-
-        smart_data = []
+        dmidecode_data = ''
         if proc.returncode >= 0:
-            for disk in disk_info['blockdevices']:
-                if disk['type'] == 'disk':
-                    smart_cmd = ["smartctl -x --json=cosviu /dev/" + disk['kname']]
-                    proc2 = subprocess.Popen(smart_cmd, shell=True, stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
-                    smart_output, smart_errors = proc2.communicate()
-                    proc2.wait()
-                    if proc2.returncode == 0:
-                        smart_data.append(json.loads(smart_output))
-                    elif "UNRECOGNIZED OPTION" in smart_output.decode('utf8'):
-                        cmd2 = ["smartctl -x /dev/" + disk['kname']]
-                        proc2 = subprocess.Popen(cmd2, shell=True, stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
-                        output_smart2, errors_smart2 = proc2.communicate()
-                        proc2.wait()
-                        smart_data.append(output_smart2.decode('utf8'))
-                    else:
-                        print('[ERROR] SMARTCTL failed execution with output: ', smart_errors, '\r')
-                        smart_data.append(str(smart_errors))
-        else:
-            print('[ERROR] Getting disks information failed with output: ', errors_lsblk, '\r')
-            return [errors_lsblk]
-        print('[INFO] SMART successfully completed. \r')
-        return smart_data
+            try:
+                dmidecode_data = dmi_output.decode('utf8')
+            except Exception as e:
+                dmidecode_data = str(e)
+                print('[EXCEPTION] DMIDECODE exception', e, '\r')
+            else:
+                print('[INFO] DMIDECODE successfully completed. \r')
+        elif proc.returncode < 0:
+            try:
+                dmidecode_data = dmi_errors.decode('utf8')
+            except Exception as e:
+                dmidecode_data = str(e)
+                print('[EXCEPTION] DMIDECODE exception', e, '\r')
+            else:
+                print('[ERROR] DMIDECODE failed execution with output: ', dmi_errors, '\r')
+
+        return dmidecode_data
 
     def get_hwinfo_data(self):
         """Get DMI table information using dmidecode command."""
@@ -83,34 +87,69 @@ class WorkbenchLite:
         hwinfo_output, hwinfo_errors = proc.communicate()
         proc.wait()
 
-        if proc.returncode < 0:
-            print('[ERROR] HWINFO failed execution with output: ', hwinfo_errors, '\r')
-            return hwinfo_errors.decode('utf8')
-
-        hwinfo_data = hwinfo_output.decode('utf8')
-
-        print('[INFO] HWINFO successfully completed. \r')
+        hwinfo_data = ''
+        if proc.returncode >= 0:
+            try:
+                hwinfo_data = hwinfo_output.decode('utf8')
+            except Exception as e:
+                hwinfo_data = str(e)
+                print('[EXCEPTION] HWINFO exception', e, '\r')
+            else:
+                print('[INFO] HWINFO successfully completed. \r')
+        elif proc.returncode < 0:
+            try:
+                hwinfo_data = hwinfo_errors.decode('utf8')
+            except Exception as e:
+                hwinfo_data = str(e)
+                print('[EXCEPTION] HWINFO exception', e, '\r')
+            else:
+                print('[ERROR] HWINFO failed execution with output: ', hwinfo_errors, '\r')
         return hwinfo_data
 
-    def get_lshw_data(self):
-        """Get DMI table information using dmidecode command."""
-        lshw_command = ['lshw -json']
-        proc = subprocess.Popen(lshw_command, shell=True, stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
-        lshw_output, lshw_errors = proc.communicate()
+    def get_smart_data(self):
+        """Execute dmidecode command."""
+        # TODO validate if get NAME or KNAME of disks
+        cmd_lsblk = ["lsblk -Jdo KNAME,TYPE"]
+        proc = subprocess.Popen(cmd_lsblk, shell=True, stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
+        output_lsblk, errors_lsblk = proc.communicate()
         proc.wait()
-        if proc.returncode < 0:
-            print('[ERROR] HWINFO failed execution with output: ', lshw_errors, '\r')
-            return lshw_errors.decode('utf8')
-        elif "WARNING" in lshw_output.decode('utf8'):
-            lshw_data = lshw_output.decode('utf8')
-        else:
-            lshw_data = json.loads(lshw_output)
 
-        print('[INFO] LSHW successfully completed. \r')
-        return lshw_data
+        try:
+            disk_info = json.loads(output_lsblk.decode('utf8'))
+        except Exception as e:
+            print('[EXCEPTION] Detecting disks information', e, '/r')
+
+        smart_data = []
+        if proc.returncode == 0:
+            for disk in disk_info['blockdevices']:
+                if disk['type'] == 'disk':
+                    smart_cmd = ["smartctl -x --json=cosviu /dev/" + disk['kname']]
+                    proc_smart = subprocess.Popen(smart_cmd, shell=True, stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
+                    smart_output, smart_errors = proc_smart.communicate()
+                    proc_smart.wait()
+                    # TODO improve disk data list with one key for disk
+                    # TODO skip getting the usb disk where live iso was mounted
+                    if proc_smart.returncode >= 0:
+                        try:
+                            disk_data = json.loads(smart_output.decode('utf8'))
+                        except Exception as e:
+                            smart_data.append(str(smart_output))
+                            print('[EXCEPTION] SMART on', disk['kname'], 'exception', e, '\r')
+                        else:
+                            smart_data.append(disk_data)
+                            print('[INFO] SMART on', disk['kname'], 'successfully completed. \r')
+                    else:
+                        print('[ERROR] SMART failed on', disk['kname'], 'with output:', smart_errors, '\r')
+                        smart_data.append(str(smart_errors))
+        else:
+            print('[ERROR] Getting disks information failed with output:', errors_lsblk, '\r')
+            return [errors_lsblk]
+
+        return smart_data
 
     def generate_snapshot(self):
         """ Getting hardware data and generate snapshot file (json)."""
+
         # Generate WB ID base on snapshot uuid value
         wbid = self.generate_wbid(self.snapshot_uuid)
         print('[WBID]', wbid, '\r')
@@ -131,14 +170,14 @@ class WorkbenchLite:
             'type': 'Snapshot',
             'uuid': str(self.snapshot_uuid),
             'wbid': wbid,
-            'software': 'WorkbenchLite',
+            'software': str(self.software),
             'version': str(self.version),
             'data': snapshot_data
         }
 
         json_file = '{date}_{wbid}_snapshot.json'.format(
-                                                    date=timestamp.strftime("%Y-%m-%d_%Hh%Mm%Ss"),
-                                                    wbid=wbid)
+            date=timestamp.strftime("%Y-%m-%d_%Hh%Mm%Ss"),
+            wbid=wbid)
         with open(json_file, 'w') as file:
             json.dump(snapshot, file, indent=2)
 
@@ -160,10 +199,10 @@ class WorkbenchLite:
             else:
                 r = response.json()
                 print('[ERROR] We could not auto-upload the device. Request error:',
-                    r['code'], '-', r['type'], '-', r['message'])
+                      r['code'], '-', r['type'], '-', r['message'])
                 return r
         except Exception as e:
-            print('[ERROR] Request exception: ', e)
+            print('[ERROR] Request exception:', e)
             return -1
 
 
