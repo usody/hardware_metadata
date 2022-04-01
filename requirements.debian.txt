@@ -1,6 +1,7 @@
 python3
 python3-dev
-dmidecode
-smartmontools
-hwinfo
-lshw
+python3-pip
+dmidecode=3.3*
+smartmontools=7.2*
+hwinfo=21.72*
+lshw=02.19*
