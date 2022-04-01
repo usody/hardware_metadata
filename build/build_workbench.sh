@@ -37,7 +37,15 @@ fi
 mkdir -p ${WB_PATH}
 
 # Install requirements
-${SUDO} apt-get update
+# thanks cdist TODO source
+# decide if update
+if [ ! -d /var/lib/apt/lists ] \
+  || [ -n "$( find /etc/apt -newer /var/lib/apt/lists )" ] \
+  || [ ! -f /var/cache/apt/pkgcache.bin ] \
+  || [ "$( stat --format %Y /var/cache/apt/pkgcache.bin )" -lt "$( date +%s -d '-1 day' )" ]
+then
+  ${SUDO} apt-get update
+fi
 ${SUDO} apt-get install -y \
   debootstrap \
   squashfs-tools \
@@ -81,18 +89,20 @@ apt-get install -y --no-install-recommends \
   live-boot \
   systemd-sysv
 
-apt-get install python3-pip
-
 ### START workbench_lite installation
 
 echo 'Install Workbench'
-# Install python requirements
-pip3 install -r /opt/workbench/requirements.txt
-# Install debian requirements
-cat /opt/workbench/requirements.debian.txt | xargs apt install -y
 
-# install lshw B02.19 utility using backports
-apt-get install -t ${VERSION_CODENAME}-backports lshw
+# Install WB debian requirements
+apt install --no-install-recommends \
+  python3 python3-dev python3-pip \
+  dmidecode smartmontools hwinfo
+
+# Install WB python requirements
+pip3 install python-dateutil==2.8.2 hashids==1.3.1 requests~=2.21.0
+
+# Install lshw B02.19 utility using backports
+apt install -t ${VERSION_CODENAME}-backports lshw
 
 # Autologin root user
 # src https://wiki.archlinux.org/title/getty#Automatic_login_to_virtual_console
@@ -110,22 +120,48 @@ systemctl enable getty@tty1.service
 # other debian utilities
 apt-get install --no-install-recommends \
   sudo \
+  iproute2 iputils-ping ifupdown isc-dhcp-client \
   curl openssh-client \
   less \
   jq \
-  nano vim-tiny && \
-apt-get clean
+  nano vim-tiny
 
-# Set up root user & exit
+###################
+# configure network
+mkdir -p /etc/network/
+cat > /etc/network/interfaces <<END2
+auto lo
+iface lo inet loopback
 
-# this is the root password
-# Method3: Use echo
-#   src https://www.systutorials.com/changing-linux-users-password-in-one-command-line/
-#   TODO hardcoded password
+auto eth0
+iface eth0 inet dhcp
+END2
+
+###################
+# configure dns
+cat > /etc/resolv.conf <<END2
+nameserver 1.1.1.1
+END2
+
+###################
+# configure hosts
+cat > /etc/hosts <<END2
+127.0.0.1    localhost ${hostname}
+::1          localhost ip6-localhost ip6-loopback
+ff02::1      ip6-allnodes
+ff02::2      ip6-allrouters
+END2
+
+# Set up root user
+#   this is the root password
+#   Method3: Use echo
+#     src https://www.systutorials.com/changing-linux-users-password-in-one-command-line/
+#     TODO hardcoded password
 echo -e 'workbench\nworkbench' | passwd root
 
+# general cleanup
+apt-get clean
 END
-
 
 # Creating directories
 mkdir -p ${WB_PATH}/staging/EFI/boot
@@ -174,11 +210,13 @@ MENU COLOR timeout      1;37;40 #c0ffffff #00000000 std
 MENU COLOR msg07        37;40   #90ffffff #a0000000 std
 MENU COLOR tabmsg       31;40   #30ffffff #00000000 std
 
+# THIS IS WHAT IS RUNNING NOW! (isolinux)
+# disabled predicted names -> src https://michlstechblog.info/blog/linux-disable-assignment-of-new-names-for-network-interfaces/
 LABEL linux
   MENU LABEL Debian Live [BIOS/ISOLINUX]
   MENU DEFAULT
   KERNEL /live/vmlinuz
-  APPEND initrd=/live/initrd boot=live
+  APPEND initrd=/live/initrd boot=live net.ifnames=0 biosdevname=0
 
 LABEL linux
   MENU LABEL Debian Live [BIOS/ISOLINUX] (nomodeset)
@@ -237,8 +275,8 @@ grub-mkstandalone \
 )
 
 # Creating ISO
-
-wbiso_file="${WB_PATH}/debian-wb-lite.iso"
+WB_VERSION='2022.03.2-alpha'
+wbiso_file="${WB_PATH}/${WB_VERSION}_WB.iso"
 
 xorriso \
   -as mkisofs \

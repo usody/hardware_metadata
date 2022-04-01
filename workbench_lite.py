@@ -18,7 +18,7 @@ class WorkbenchLite:
         self.type = 'Snapshot'
         self.snapshot_uuid = uuid.uuid4()
         self.software = 'Workbench'
-        self.version = '2022.03.00'
+        self.version = '2022.03.2-alpha'
 
     def generate_wbid(self, uuid: uuid):
         from hashids import Hashids
@@ -187,7 +187,8 @@ class WorkbenchLite:
     def submit_snapshot(self, snapshot):
         domain = 'https://api.testing.usody.com'
         url = domain + '/usodybeta/actions/'
-        token = ''
+        token = 'ODY5ODRlZTgtYTdjOC00ZjdiLWE1NWYtYWMyNzdmYTlmMjQxOg=='
+
         post_headers = {'Authorization': 'Basic ' + token, 'Content-type': 'application/json'}
         snapshot_json = json.dumps(snapshot)
 
