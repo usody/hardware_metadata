@@ -89,18 +89,20 @@ apt-get install -y --no-install-recommends \
   live-boot \
   systemd-sysv
 
-apt-get install python3-pip
-
 ### START workbench_lite installation
 
 echo 'Install Workbench'
-# Install python requirements
-pip3 install -r /opt/workbench/requirements.txt
-# Install debian requirements
-cat /opt/workbench/requirements.debian.txt | xargs apt install -y
 
-# install lshw B02.19 utility using backports
-apt-get install -t ${VERSION_CODENAME}-backports lshw
+# Install WB debian requirements
+apt install --no-install-recommends \
+  python3 python3-dev python3-pip \
+  dmidecode smartmontools hwinfo
+
+# Install WB python requirements
+pip3 install python-dateutil==2.8.2 hashids==1.3.1 requests~=2.21.0
+
+# Install lshw B02.19 utility using backports
+apt install -t ${VERSION_CODENAME}-backports lshw
 
 # Autologin root user
 # src https://wiki.archlinux.org/title/getty#Automatic_login_to_virtual_console
@@ -273,8 +275,8 @@ grub-mkstandalone \
 )
 
 # Creating ISO
-
-wbiso_file="${WB_PATH}/debian-wb-lite.iso"
+WB_VERSION='2022.03.2-alpha'
+wbiso_file="${WB_PATH}/${WB_VERSION}_WB.iso"
 
 xorriso \
   -as mkisofs \
