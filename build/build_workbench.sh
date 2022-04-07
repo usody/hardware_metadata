@@ -283,6 +283,12 @@ grub-mkstandalone \
     mcopy -vi efiboot.img ../../../tmp/bootx64.efi ::efi/boot/
 )
 
+(
+  cd ${WB_PATH}/staging && \
+    dd if=/dev/zero of=wbp bs=100M count=1 && \
+    mkfs.vfat wbp
+)
+
 # Creating ISO
 if [ "${DEBUG:-}" ]; then
   WB_VERSION='debug'
@@ -291,11 +297,9 @@ else
 fi
 wbiso_file="${WB_PATH}/${WB_VERSION}_WB.iso"
 
-xorriso \
-  -as mkisofs \
+xorrisofs \
   -iso-level 3 \
   -o "${wbiso_file}" \
-  -full-iso9660-filenames \
   -volid "DEBIAN_CUSTOM" \
   -isohybrid-mbr /usr/lib/ISOLINUX/isohdpfx.bin \
   -eltorito-boot \
@@ -309,9 +313,10 @@ xorriso \
     -no-emul-boot \
     -isohybrid-gpt-basdat \
   -append_partition 2 0xef ${WB_PATH}/staging/EFI/boot/efiboot.img \
+  -append_partition 3 "FAT16" ${WB_PATH}/staging/wbp \
   "${WB_PATH}/staging"
 
-printf "\n\n  image generated in build/${wbiso_file}\n\n"
+printf "\n\n  Image generated in build/${wbiso_file}\n\n"
 
 # Execute iso
 # 	qemu-system-x86_64 -enable-kvm -m 2G -vga qxl -netdev user,id=wan -device virtio-net,netdev=wan,id=nic1 -drive file=build/wbiso/debian-wb-lite.iso,cache=none,if=virtio;
