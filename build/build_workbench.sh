@@ -163,6 +163,16 @@ echo -e 'workbench\nworkbench' | passwd root
 apt-get clean
 END
 
+# enable persistence -> src https://gist.github.com/ravecat/63a0d49014b6187bebc68cf855d55a83
+data_rw_path="${WB_PATH}/chroot/live-rw"
+if [ ! -f "${data_rw_path}" ]; then
+  ${SUDO} dd if=/dev/zero of="${data_rw_path}" bs=100MB count=1
+  ${SUDO} /sbin/mkfs.ext2 -L persistence -F "${data_rw_path}"
+fi
+
+# src https://manpages.debian.org/testing/open-infrastructure-system-boot/persistence.conf.5.en.html
+echo "/ union" > "${WB_PATH}/chroot/persistence.conf"
+
 # Creating directories
 mkdir -p ${WB_PATH}/staging/EFI/boot
 mkdir -p ${WB_PATH}/staging/boot/grub/x86_64-efi
@@ -216,7 +226,7 @@ LABEL linux
   MENU LABEL Debian Live [BIOS/ISOLINUX]
   MENU DEFAULT
   KERNEL /live/vmlinuz
-  APPEND initrd=/live/initrd boot=live net.ifnames=0 biosdevname=0
+  APPEND initrd=/live/initrd boot=live net.ifnames=0 biosdevname=0 persistence
 
 LABEL linux
   MENU LABEL Debian Live [BIOS/ISOLINUX] (nomodeset)
