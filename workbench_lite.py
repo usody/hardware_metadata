@@ -24,7 +24,7 @@ class WorkbenchLite:
         from hashids import Hashids
         ALPHABET = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ1234567890'
         # TODO short hash result to 6 characters
-        return Hashids('', min_length=5, alphabet=ALPHABET).encode(int(uuid))
+        return Hashids('', min_length=5, alphabet=ALPHABET).encode(uuid.time_mid)
 
     def get_lshw_data(self):
         """Get hw data using lshw command."""
@@ -194,7 +194,7 @@ class WorkbenchLite:
 
         # Generate and save snapshot
         snapshot = {
-            'timestamp': str(timestamp),
+            'timestamp': timestamp,
             'type': 'Snapshot',
             'uuid': str(self.snapshot_uuid),
             'wbid': wbid,
@@ -208,11 +208,12 @@ class WorkbenchLite:
 
 
 def save_snapshot(snapshot):
-    json_file = '{date}_{wbid}_snapshot.json'.format(
-        date=snapshot.get('timestamp').strftime("%Y-%m-%d_%Hh%Mm%Ss"),
-        wbid=snapshot.get('wbid'))
+    timestamp = snapshot['timestamp'].strftime("%Y-%m-%d_%Hh%Mm%Ss")
+    snapshot['timestamp'] = timestamp
+    wbid = snapshot['wbid']
+    json_file = '{date}_{wbid}_snapshot.json'.format(date=timestamp, wbid=wbid)
     with open(json_file, 'w') as file:
-        json.dump(snapshot, file, indent=2)
+        json.dump(snapshot, file, indent=2, sort_keys=True)
     print('[INFO] Snapshot JSON successfully saved. \r')
 
 
@@ -222,6 +223,7 @@ def submit_snapshot(snapshot):
     token = 'ODY5ODRlZTgtYTdjOC00ZjdiLWE1NWYtYWMyNzdmYTlmMjQxOg=='
 
     post_headers = {'Authorization': 'Basic ' + token, 'Content-type': 'application/json'}
+    snapshot['timestamp'] = str(snapshot['timestamp'])
     snapshot_json = json.dumps(snapshot)
 
     try:
