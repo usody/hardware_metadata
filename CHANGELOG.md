@@ -5,14 +5,21 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/)
 and this project adheres to [Calendar Versioning](https://calver.org/#scheme) scheme (`YYYY.0M.PATCH`).
 
 ## prod
-[2022.03.0-alpha]
+[2022.03.2-alpha]
 
 ## preprod
-[2022.03.1-alpha]
+[2022.03.2-alpha]
 
 ----
 
 ## [Unreleased]
+
+## [2022.03.3-alpha] - 2022/04/08
+_(dmidecode = 3.3-2 | smartmontools = 7.2-1 | hwinfo = 21.72-1 | lshw = 02.19 | lspci = 3.5.2)_
+
+- [added] lspci package 
+- [added] new save_snapshot function
+- [changed] update dict of hw data in snapshot
 
 ## [2022.03.2-alpha] - 2022/04/01
 _(dmidecode = 3.3-2 | smartmontools = 7.2-1 | hwinfo = 21.72-1 | lshw = 02.19)_

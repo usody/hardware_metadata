@@ -65,8 +65,6 @@ fi
 wb_dir="${WB_PATH}/chroot/opt/workbench"
 mkdir -p "${wb_dir}"
 cp ../workbench_lite.py "${wb_dir}"
-cp ../requirements.txt "${wb_dir}"
-cp ../requirements.debian.txt "${wb_dir}"
 cp files/.profile "${WB_PATH}/chroot/root/"
 
 
@@ -96,7 +94,7 @@ echo 'Install Workbench'
 # Install WB debian requirements
 apt install --no-install-recommends \
   python3 python3-dev python3-pip \
-  dmidecode smartmontools hwinfo
+  dmidecode smartmontools hwinfo lspci
 
 # Install WB python requirements
 pip3 install python-dateutil==2.8.2 hashids==1.3.1 requests~=2.21.0
@@ -285,7 +283,7 @@ grub-mkstandalone \
 )
 
 # Creating ISO
-WB_VERSION='2022.03.2-alpha'
+WB_VERSION='2022.03.3-alpha'
 wbiso_file="${WB_PATH}/${WB_VERSION}_WB.iso"
 
 xorriso \
