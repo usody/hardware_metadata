@@ -31,5 +31,5 @@ run_tests:
 	python3 test.py
 
 boot_iso:
-	qemu-system-x86_64 -enable-kvm -m 2G -vga qxl -netdev user,id=wan -device virtio-net,netdev=wan,id=nic1 -drive file=build/wbiso/2022.03.2-alpha_WB.iso,cache=none,if=virtio;
+	qemu-system-x86_64 -enable-kvm -m 2G -vga qxl -netdev user,id=wan -device virtio-net,netdev=wan,id=nic1 -drive format=raw,file=build/wbiso/2022.03.3-alpha_WB.iso,cache=none,if=virtio;
 
