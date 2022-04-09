@@ -15,13 +15,14 @@ and this project adheres to [Calendar Versioning](https://calver.org/#scheme) sc
 ## [Unreleased]
 
 ## [2022.03.3-alpha] - 2022/04/08
-_(dmidecode = 3.3-2 | smartmontools = 7.2-1 | hwinfo = 21.72-1 | lshw = 02.19 | lspci = 3.5.2)_
+_(dmidecode = 3.3 | smartmontools = 7.2 | hwinfo = 21.72 | lshw = 02.19 | lspci = 3.7.0)_
 
 - [added] lspci package 
 - [added] new save_snapshot function
+- [added] new field shcema_api in the snapshot
 - [changed] update dict of hw data in snapshot
 - [changed] wbid to max 5 characters
-
+- [changed] url to submit snapshot
 
 ## [2022.03.2-alpha] - 2022/04/01
 _(dmidecode = 3.3-2 | smartmontools = 7.2-1 | hwinfo = 21.72-1 | lshw = 02.19)_
