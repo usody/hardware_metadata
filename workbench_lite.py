@@ -19,6 +19,7 @@ class WorkbenchLite:
         self.snapshot_uuid = uuid.uuid4()
         self.software = 'Workbench'
         self.version = '2022.03.3-alpha'
+        self.schema_api = '1.0.0'
 
     def generate_wbid(self, uuid):
         from hashids import Hashids
@@ -93,17 +94,17 @@ class WorkbenchLite:
                 lspci_data = lspci_output.decode('utf8')
             except Exception as e:
                 lspci_data = str(e)
-                print('[EXCEPTION] HWINFO exception', e, '\r')
+                print('[EXCEPTION] LSPCI exception', e, '\r')
             else:
-                print('[INFO] HWINFO successfully completed. \r')
+                print('[INFO] LSPCI successfully completed. \r')
         elif proc.returncode < 0:
             try:
                 lspci_data = lspci_errors.decode('utf8')
             except Exception as e:
                 lspci_data = str(e)
-                print('[EXCEPTION] HWINFO exception', e, '\r')
+                print('[EXCEPTION] LSPCI exception', e, '\r')
             else:
-                print('[ERROR] HWINFO failed execution with output: ', lspci_errors, '\r')
+                print('[ERROR] LSPCI failed execution with output: ', lspci_errors, '\r')
         return lspci_data
 
     def get_hwinfo_data(self):
@@ -198,8 +199,9 @@ class WorkbenchLite:
             'type': 'Snapshot',
             'uuid': str(self.snapshot_uuid),
             'wbid': wbid,
-            'software': str(self.software),
-            'version': str(self.version),
+            'software': self.software,
+            'version': self.version,
+            'schema_api': self.schema_api,
             'data': snapshot_data
         }
 
@@ -219,7 +221,7 @@ def save_snapshot(snapshot):
 
 def submit_snapshot(snapshot):
     domain = 'https://api.testing.usody.com'
-    url = domain + '/api/inventory'
+    url = domain + '/api/inventory/'
     token = 'ODY5ODRlZTgtYTdjOC00ZjdiLWE1NWYtYWMyNzdmYTlmMjQxOg=='
 
     post_headers = {'Authorization': 'Basic ' + token, 'Content-type': 'application/json'}
@@ -250,18 +252,3 @@ if __name__ == '__main__':
     save_snapshot(snapshot)
     submit_snapshot(snapshot)
     print('[INFO] ---- Workbench finished ---- \r')
-
-
-# Funciton to convert an int32 to an alphanumeric ID of 6 characters
-# Src: https://stackoverflow.com/questions/51333374/shortest-possible-generated-unique-id
-def int32_to_id(n):
-    if n == 0: return "0"
-    chars = "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ"
-    length = len(chars)
-    result = ""
-    remain = n
-    while remain > 0:
-        pos = remain % length
-        remain = remain // length
-        result = chars[pos] + result
-    return result
