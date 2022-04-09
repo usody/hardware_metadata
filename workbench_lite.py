@@ -13,8 +13,8 @@ class WorkbenchLite:
     """
 
     def __init__(self):
-        #if os.geteuid() != 0:
-            #raise EnvironmentError('[ERROR] Execute WorkbenchLite as root / sudo. \r')
+        if os.geteuid() != 0:
+            raise EnvironmentError('[ERROR] Execute WorkbenchLite as root / sudo. \r')
         self.type = 'Snapshot'
         self.snapshot_uuid = uuid.uuid4()
         self.software = 'Workbench'
@@ -219,7 +219,7 @@ def save_snapshot(snapshot):
 
 def submit_snapshot(snapshot):
     domain = 'https://api.testing.usody.com'
-    url = domain + '/usodybeta/actions/'
+    url = domain + '/api/inventory'
     token = 'ODY5ODRlZTgtYTdjOC00ZjdiLWE1NWYtYWMyNzdmYTlmMjQxOg=='
 
     post_headers = {'Authorization': 'Basic ' + token, 'Content-type': 'application/json'}
