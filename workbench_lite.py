@@ -195,7 +195,7 @@ class WorkbenchLite:
 
         # Generate and save snapshot
         snapshot = {
-            'timestamp': timestamp,
+            'timestamp': timestamp.isoformat(),
             'type': 'Snapshot',
             'uuid': str(self.snapshot_uuid),
             'wbid': wbid,
@@ -206,14 +206,12 @@ class WorkbenchLite:
         }
 
         print('[INFO] Snapshot JSON successfully generated. \r')
-        return snapshot
+        return snapshot, timestamp
 
 
-def save_snapshot(snapshot):
-    timestamp = snapshot['timestamp'].strftime("%Y-%m-%d_%Hh%Mm%Ss")
-    snapshot['timestamp'] = timestamp
-    wbid = snapshot['wbid']
-    json_file = '{date}_{wbid}_snapshot.json'.format(date=timestamp, wbid=wbid)
+def save_snapshot(snapshot, timestamp):
+    json_file = '{date}_{wbid}_snapshot.json'.format(date=timestamp.strftime("%Y-%m-%d_%Hh%Mm%Ss"),
+                                                     wbid=snapshot['wbid'])
     with open(json_file, 'w') as file:
         json.dump(snapshot, file, indent=2, sort_keys=True)
     print('[INFO] Snapshot JSON successfully saved. \r')
@@ -248,7 +246,7 @@ if __name__ == '__main__':
     workbench_lite = WorkbenchLite()
     print('[INFO] ---- Starting Workbench ---- \r')
     print('[VERSION]', workbench_lite.version, '\r')
-    snapshot = workbench_lite.generate_snapshot()
-    save_snapshot(snapshot)
+    snapshot, timestamp = workbench_lite.generate_snapshot()
+    save_snapshot(snapshot, timestamp)
     submit_snapshot(snapshot)
     print('[INFO] ---- Workbench finished ---- \r')

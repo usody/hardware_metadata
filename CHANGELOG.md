@@ -17,6 +17,7 @@ and this project adheres to [Calendar Versioning](https://calver.org/#scheme) sc
 ## [2022.03.3-alpha] - 2022/04/08
 _(dmidecode = 3.3 | smartmontools = 7.2 | hwinfo = 21.72 | lshw = 02.19 | lspci = 3.7.0)_
 
+- [fixed] timestamp iso format
 - [added] lspci package 
 - [added] new save_snapshot function
 - [added] new field shcema_api in the snapshot
