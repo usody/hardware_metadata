@@ -1,4 +1,4 @@
-#!/bin/sh -e
+#!/bin/sh -eu
 
 set -x
 
@@ -29,7 +29,7 @@ fi
 #   if no VERSION_CODENAME is specified we assume that the bootstrap is going to
 #   be build with the same version of debian being executed because some files
 #   are copied from our root system
-if [ -z "${VERSION_CODENAME}" ]; then
+if [ -z "${VERSION_CODENAME:-}" ]; then
   . /etc/os-release
   echo "TAKING OS-RELEASE FILE"
 fi
@@ -242,19 +242,19 @@ set timeout=1
 # If X has issues finding screens, experiment with/without nomodeset.
 
 menuentry "Debian Live [EFI/GRUB]" {
-    linux ($root)/live/vmlinuz boot=live
-    initrd ($root)/live/initrd
+    linux (\$root)/live/vmlinuz boot=live
+    initrd (\$root)/live/initrd
 }
 
 menuentry "Debian Live [EFI/GRUB] (nomodeset)" {
-    linux ($root)/live/vmlinuz boot=live nomodeset
-    initrd ($root)/live/initrd
+    linux (\$root)/live/vmlinuz boot=live nomodeset
+    initrd (\$root)/live/initrd
 }
 EOF
 
 cat <<EOF >${WB_PATH}/tmp/grub-standalone.cfg
 search --set=root --file /DEBIAN_CUSTOM
-set prefix=($root)/boot/grub/
+set prefix=(\$root)/boot/grub/
 configfile /boot/grub/grub.cfg
 EOF
 
