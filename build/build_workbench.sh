@@ -285,8 +285,8 @@ grub-mkstandalone \
 
 (
   cd ${WB_PATH}/staging && \
-    dd if=/dev/zero of=wbp bs=100M count=1 && \
-    mkfs.vfat wbp
+    dd if=/dev/zero of=wbp.img bs=10M count=1 && \
+    mkfs.vfat wbp.img
 )
 
 # Creating ISO
@@ -313,7 +313,7 @@ xorrisofs \
     -no-emul-boot \
     -isohybrid-gpt-basdat \
   -append_partition 2 0xef ${WB_PATH}/staging/EFI/boot/efiboot.img \
-  -append_partition 3 "FAT16" ${WB_PATH}/staging/wbp \
+  -append_partition 3 "FAT16" ${WB_PATH}/staging/wbp.img \
   "${WB_PATH}/staging"
 
 printf "\n\n  Image generated in build/${wbiso_file}\n\n"
