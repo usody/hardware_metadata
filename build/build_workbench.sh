@@ -308,10 +308,11 @@ else
 fi
 wbiso_file="${WB_PATH}/${WB_VERSION}_WB.iso"
 
+# 0x14 is FAT16 Hidden FAT16 <32, this is the only format detected in windows10 automatically when using a persistent volume of 10 MB
 xorrisofs \
-  -iso-level 3 \
+  -iso-level 1 \
   -o "${wbiso_file}" \
-  -volid "DEBIAN_CUSTOM" \
+  -volid "WORKBENCH" \
   -isohybrid-mbr /usr/lib/ISOLINUX/isohdpfx.bin \
   -eltorito-boot \
     isolinux/isolinux.bin \
@@ -324,7 +325,7 @@ xorrisofs \
     -no-emul-boot \
     -isohybrid-gpt-basdat \
   -append_partition 2 0xef ${WB_PATH}/staging/EFI/boot/efiboot.img \
-  -append_partition 3 "FAT16" "${rw_path}" \
+  -append_partition 3 0x14 "${rw_path}" \
   "${WB_PATH}/staging"
 
 printf "\n\n  Image generated in build/${wbiso_file}\n\n"
