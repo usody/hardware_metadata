@@ -182,7 +182,7 @@ mkdir -p ${WB_PATH}/tmp
 # Compress chroot folder
 
 # Faster squashfs when debugging -> src https://forums.fedoraforum.org/showthread.php?284366-squashfs-wo-compression-speed-up
-if [ "${DEBUG}" ]; then
+if [ "${DEBUG:-}" ]; then
   DEBUG_SQUASHFS_ARGS='-noI -noD -noF -noX'
 fi
 
@@ -284,7 +284,11 @@ grub-mkstandalone \
 )
 
 # Creating ISO
-WB_VERSION='2022.03.3-alpha'
+if [ "${DEBUG:-}" ]; then
+  WB_VERSION='debug'
+else
+  WB_VERSION='2022.03.3-alpha'
+fi
 wbiso_file="${WB_PATH}/${WB_VERSION}_WB.iso"
 
 xorriso \
