@@ -294,12 +294,6 @@ grub-mkstandalone \
     mcopy -vi efiboot.img ../../../tmp/bootx64.efi ::efi/boot/
 )
 
-(
-  cd ${WB_PATH}/staging && \
-    dd if=/dev/zero of=wbp bs=100M count=1 && \
-    mkfs.vfat wbp
-)
-
 # Creating ISO
 if [ "${DEBUG:-}" ]; then
   WB_VERSION='debug'
