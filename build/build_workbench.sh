@@ -294,11 +294,17 @@ grub-mkstandalone \
     mcopy -vi efiboot.img ../../../tmp/bootx64.efi ::efi/boot/
 )
 
+(
+  cd ${WB_PATH}/staging && \
+    dd if=/dev/zero of=wbp.img bs=10M count=1 && \
+    mkfs.vfat wbp.img
+)
+
 # Creating ISO
 if [ "${DEBUG:-}" ]; then
   WB_VERSION='debug'
 else
-  WB_VERSION='2022.03.3-alpha'
+  WB_VERSION='2022.4.0-beta'
 fi
 wbiso_file="${WB_PATH}/${WB_VERSION}_WB.iso"
 

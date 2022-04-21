@@ -13,12 +13,11 @@ class WorkbenchLite:
     """
 
     def __init__(self):
-        if os.geteuid() != 0:
-            raise EnvironmentError('[ERROR] Execute WorkbenchLite as root / sudo. \r')
+        #if os.geteuid() != 0:    raise EnvironmentError('[ERROR] Execute WorkbenchLite as root / sudo. \r')
         self.type = 'Snapshot'
         self.snapshot_uuid = uuid.uuid4()
         self.software = 'Workbench'
-        self.version = '2022.03.3-alpha'
+        self.version = '2022.4.0-beta'
         self.schema_api = '1.0.0'
 
     def generate_wbid(self, uuid):
@@ -210,11 +209,15 @@ class WorkbenchLite:
 
 
 def save_snapshot(snapshot, timestamp):
-    json_file = '{date}_{wbid}_snapshot.json'.format(date=timestamp.strftime("%Y-%m-%d_%Hh%Mm%Ss"),
+    try:
+        json_file = '{date}_{wbid}_snapshot.json'.format(date=timestamp.strftime("%Y-%m-%d_%Hh%Mm%Ss"),
                                                      wbid=snapshot['wbid'])
-    with open(json_file, 'w') as file:
-        json.dump(snapshot, file, indent=2, sort_keys=True)
-    print('[INFO] Snapshot JSON successfully saved. \r')
+        with open(json_file, 'w') as file:
+            json.dump(snapshot, file, indent=2, sort_keys=True)
+        return 0
+    except Exception as e:
+        print('[ERROR] Request exception:', e, '\r')
+        return e
 
 
 def submit_snapshot(snapshot):
@@ -229,24 +232,37 @@ def submit_snapshot(snapshot):
     try:
         response = requests.post(url, headers=post_headers, data=snapshot_json)
         if response.status_code == 201:
-            print('[INFO] Snapshot JSON successfully uploaded. \r')
-            print('[INFO] Device page: ', domain + response.json()['device']['url'], '\r')
-            return 0
+            device = response.json()['device']
+            if device.get('url') is None:
+                print('[WARNING] Snapshot JSON uploaded but an error has occurred in the creation of the device. \r')
+                print('More information on https://app.usody.com. \r')
+            else:
+                print('[INFO] Snapshot JSON successfully uploaded. \r')
+                print('[INFO] Device page: ', domain + device['url'], '\r')
         else:
             r = response.json()
-            print('[ERROR] We could not auto-upload the device. Request error:',
-                  r['code'], '-', r['type'], '-', r['message'], '\r')
-            return r
+            print('[ERROR] We could not auto-upload the device. \r')
+            print('Request error:', r['code'], '-', r['type'], '-', r['message'], '\r')
+        return 0
     except Exception as e:
-        print('[ERROR] Request exception:', e, '\r')
-        return -1
+        print('[EXCEPTION] Request exception:', e, '\r')
+        return e
 
 
-if __name__ == '__main__':
+if '__main__' == __name__:
     workbench_lite = WorkbenchLite()
+
     print('[INFO] ---- Starting Workbench ---- \r')
     print('[VERSION]', workbench_lite.version, '\r')
+
     snapshot, timestamp = workbench_lite.generate_snapshot()
-    save_snapshot(snapshot, timestamp)
+
+    rsave = save_snapshot(snapshot, timestamp)
+    if rsave == 0:
+        print('[INFO] Snapshot JSON successfully saved. \r')
+    else:
+        print('[EXCEPTION] Save exception:', rsave, '\r')
+
     submit_snapshot(snapshot)
+
     print('[INFO] ---- Workbench finished ---- \r')
