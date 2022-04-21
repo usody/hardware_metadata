@@ -2,28 +2,33 @@
 
 set -x
 
-# TODO encapsulate into functions
-
 # TODO verify sudo situation
+detect_user() {
+  # detect non root user without sudo
+  if [ "$(id -u)" -ne 0 ] && id $USER | grep -qv sudo; then
+    echo "ERROR: this script needs root or sudo permissions (current user is not part of sudo group)"
+    exit 1
+  # detect user with sudo or already on sudo src https://serverfault.com/questions/568627/can-a-program-tell-it-is-being-run-under-sudo/568628#568628
+  elif [ "$(id -u)" -ne 0 ] || [ -n "${SUDO_USER}" ]; then
+    SUDO='sudo'
+    # jump to current dir where the script is so relative links work
+    cd "$(dirname "${0}")"
+    # workbench working directory to build the iso
+    WB_PATH="wbiso"
+  # detect pure root
+  elif [ "$(id -u)" -e 0 ]; then
+    SUDO=''
+    WB_PATH="/opt/workbench_live_dev"
+  fi
+}
+
+# TODO encapsulate more into functions
+
+detect_user
 
 hostname='workbench-live'
-
-# detect non root user without sudo
-if [ "$(id -u)" -ne 0 ] && id $USER | grep -qv sudo; then
-  echo "ERROR: this script needs root or sudo permissions (current user is not part of sudo group)"
-  exit 1
-# detect user with sudo or already on sudo src https://serverfault.com/questions/568627/can-a-program-tell-it-is-being-run-under-sudo/568628#568628
-elif [ "$(id -u)" -ne 0 ] || [ -n "${SUDO_USER}" ]; then
-  SUDO='sudo'
-  # jump to current dir where the script is so relative links work
-  cd "$(dirname "${0}")"
-  # workbench working directory to build the iso
-  WB_PATH="wbiso"
-# detect pure root
-elif [ "$(id -u)" -e 0 ]; then
-  SUDO=''
-  WB_PATH="/opt/workbench_live_dev"
-fi
+# persistent partition
+rw_path="${WB_PATH}/staging/wbp_vfat.img"
 
 # version of debian the bootstrap is going to build
 #   if no VERSION_CODENAME is specified we assume that the bootstrap is going to
@@ -162,11 +167,17 @@ echo -e 'workbench\nworkbench' | passwd root
 apt-get clean
 END
 
-# enable persistence -> src https://gist.github.com/ravecat/63a0d49014b6187bebc68cf855d55a83
-data_rw_path="${WB_PATH}/chroot/live-rw"
-if [ ! -f "${data_rw_path}" ]; then
-  ${SUDO} dd if=/dev/zero of="${data_rw_path}" bs=100MB count=1
-  ${SUDO} /sbin/mkfs.ext2 -L persistence -F "${data_rw_path}"
+if [ ! -f "${rw_path}" ]; then
+  dd if=/dev/zero of="${rw_path}" bs=10M count=1
+  mkfs.vfat "${rw_path}"
+  uuid="$(blkid "${rw_path}" | awk '{ print $3; }')"
+  cat > "${WB_PATH}/chroot/etc/fstab" <<END
+# next three lines originally appeared on fstab, we preserve them
+# UNCONFIGURED FSTAB FOR BASE SYSTEM
+overlay / overlay rw 0 0
+tmpfs /tmp tmpfs nosuid,nodev 0 0
+${uuid} /mnt vfat defaults 0 0
+END
 fi
 
 # src https://manpages.debian.org/testing/open-infrastructure-system-boot/persistence.conf.5.en.html
@@ -291,12 +302,11 @@ else
 fi
 wbiso_file="${WB_PATH}/${WB_VERSION}_WB.iso"
 
-xorriso \
-  -as mkisofs \
-  -iso-level 3 \
+# 0x14 is FAT16 Hidden FAT16 <32, this is the only format detected in windows10 automatically when using a persistent volume of 10 MB
+xorrisofs \
+  -iso-level 1 \
   -o "${wbiso_file}" \
-  -full-iso9660-filenames \
-  -volid "DEBIAN_CUSTOM" \
+  -volid "WORKBENCH" \
   -isohybrid-mbr /usr/lib/ISOLINUX/isohdpfx.bin \
   -eltorito-boot \
     isolinux/isolinux.bin \
@@ -309,9 +319,10 @@ xorriso \
     -no-emul-boot \
     -isohybrid-gpt-basdat \
   -append_partition 2 0xef ${WB_PATH}/staging/EFI/boot/efiboot.img \
+  -append_partition 3 0x14 "${rw_path}" \
   "${WB_PATH}/staging"
 
-printf "\n\n  image generated in build/${wbiso_file}\n\n"
+printf "\n\n  Image generated in build/${wbiso_file}\n\n"
 
 # Execute iso
 # 	qemu-system-x86_64 -enable-kvm -m 2G -vga qxl -netdev user,id=wan -device virtio-net,netdev=wan,id=nic1 -drive file=build/wbiso/debian-wb-lite.iso,cache=none,if=virtio;
