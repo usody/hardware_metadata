@@ -13,15 +13,15 @@ and this project adheres to [Calendar Versioning](https://calver.org/#scheme) sc
 ----
 
 ## [Unreleased]
-
+- [fixed] empty smart field on snapshot
 
 ## [2022.4.0-beta] - 2022/04/20
 _(dmidecode = 3.3 | smartmontools = 7.2 | hwinfo = 21.72 | lshw = 02.19 | lspci = 3.7.0)_
 
-- [fixed] empty smart field on snapshot
-- [added] response when submit snapshot fails
+- [added] response when snapshot parsing on the server fails
+- [added] first functional version of ISO persistence 
 - [changed] calver scheme to YYYY.MM.PATCH
-- [changed] usb name DEBIAN_CUSTOM to WB_USB
+- [changed] usb name DEBIAN_CUSTOM to WORKBENCH
 
 ## [2022.03.3-alpha] - 2022/04/08
 _(dmidecode = 3.3 | smartmontools = 7.2 | hwinfo = 21.72 | lshw = 02.19 | lspci = 3.7.0)_
