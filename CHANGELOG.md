@@ -2,7 +2,7 @@
 All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/)
-and this project adheres to [Calendar Versioning](https://calver.org/#scheme) scheme (`YYYY.0M.PATCH`).
+and this project adheres to [Calendar Versioning](https://calver.org/#scheme) scheme (`YYYY.MM.PATCH`).
 
 ## prod
 [2022.03.2-alpha]
@@ -13,6 +13,15 @@ and this project adheres to [Calendar Versioning](https://calver.org/#scheme) sc
 ----
 
 ## [Unreleased]
+
+
+## [2022.4.0-beta] - 2022/04/20
+_(dmidecode = 3.3 | smartmontools = 7.2 | hwinfo = 21.72 | lshw = 02.19 | lspci = 3.7.0)_
+
+- [fixed] empty smart field on snapshot
+- [added] response when submit snapshot fails
+- [changed] calver scheme to YYYY.MM.PATCH
+- [changed] usb name DEBIAN_CUSTOM to WB_USB
 
 ## [2022.03.3-alpha] - 2022/04/08
 _(dmidecode = 3.3 | smartmontools = 7.2 | hwinfo = 21.72 | lshw = 02.19 | lspci = 3.7.0)_
