@@ -191,7 +191,7 @@ fi
 ${SUDO} mksquashfs \
   ${WB_PATH}/chroot \
   ${WB_PATH}/staging/live/filesystem.squashfs \
-  ${DEBUG_SQUASHFS_ARGS} \
+  ${DEBUG_SQUASHFS_ARGS:-} \
   -noappend -e boot
 
 # Copy kernel and initramfs
