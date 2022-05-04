@@ -246,7 +246,7 @@ LABEL linux
 EOF
 
 cat <<EOF >${WB_PATH}/staging/boot/grub/grub.cfg
-search --set=root --file /DEBIAN_CUSTOM
+search --set=root --file /WORKBENCH
 
 set default="0"
 set timeout=1
@@ -265,12 +265,12 @@ menuentry "Debian Live [EFI/GRUB] (nomodeset)" {
 EOF
 
 cat <<EOF >${WB_PATH}/tmp/grub-standalone.cfg
-search --set=root --file /DEBIAN_CUSTOM
+search --set=root --file /WORKBENCH
 set prefix=(\$root)/boot/grub/
 configfile /boot/grub/grub.cfg
 EOF
 
-touch ${WB_PATH}/staging/DEBIAN_CUSTOM
+touch ${WB_PATH}/staging/WORKBENCH
 
 ## Bootloaders
 
@@ -292,12 +292,6 @@ grub-mkstandalone \
     mkfs.vfat efiboot.img && \
     mmd -i efiboot.img efi efi/boot && \
     mcopy -vi efiboot.img ../../../tmp/bootx64.efi ::efi/boot/
-)
-
-(
-  cd ${WB_PATH}/staging && \
-    dd if=/dev/zero of=wbp.img bs=10M count=1 && \
-    mkfs.vfat wbp.img
 )
 
 # Creating ISO
