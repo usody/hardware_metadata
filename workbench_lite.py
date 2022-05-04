@@ -8,7 +8,7 @@ import requests
 
 
 class WorkbenchLite:
-    """ Create a hardware report of your computer with components using dmidecode package.
+    """ Create a snapshot of your computer with hardware data and submit the information to a server.
         You must run this software as root / sudo.
     """
 
@@ -28,7 +28,7 @@ class WorkbenchLite:
         return Hashids('', min_length=5, alphabet=ALPHABET).encode(uuid.time_mid)
 
     def get_lshw_data(self):
-        """Get hw data using lshw command."""
+        """Get hw data using lshw command and return dict."""
         lshw_command = ['lshw -json']
         proc = subprocess.Popen(lshw_command, shell=True, stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
         lshw_output, lshw_errors = proc.communicate()
@@ -51,7 +51,7 @@ class WorkbenchLite:
                 print('[EXCEPTION]', e, '\r')
             else:
                 print('[ERROR] LSHW failed execution with output: ', lshw_errors, '\r')
-
+        # TODO verify it returns a dict object
         return lshw_data
 
     def get_dmi_data(self):
@@ -79,6 +79,7 @@ class WorkbenchLite:
             else:
                 print('[ERROR] DMIDECODE failed execution with output: ', dmi_errors, '\r')
 
+        # TODO verify it returns a string object
         return dmidecode_data
 
     def get_lspci_data(self):
@@ -105,6 +106,7 @@ class WorkbenchLite:
                 print('[EXCEPTION] LSPCI exception', e, '\r')
             else:
                 print('[ERROR] LSPCI failed execution with output: ', lspci_errors, '\r')
+        # TODO verify it returns a string object
         return lspci_data
 
     def get_hwinfo_data(self):
@@ -131,6 +133,7 @@ class WorkbenchLite:
                 print('[EXCEPTION] HWINFO exception', e, '\r')
             else:
                 print('[ERROR] HWINFO failed execution with output: ', hwinfo_errors, '\r')
+        # TODO verify it returns a string object
         return hwinfo_data
 
     def get_smart_data(self):
@@ -172,7 +175,7 @@ class WorkbenchLite:
         else:
             print('[ERROR] Getting disks information failed with output:', errors_lsblk, '\r')
             return [errors_lsblk]
-
+        # TODO verify it returns a list object
         return smart_data
 
     def generate_snapshot(self):
@@ -212,16 +215,16 @@ class WorkbenchLite:
 def save_snapshot(snapshot, timestamp):
     try:
         json_file = '{date}_{sid}_snapshot.json'.format(date=timestamp.strftime("%Y-%m-%d_%Hh%Mm%Ss"),
-                                                         sid=snapshot['sid'])
+                                                        sid=snapshot['sid'])
         with open(json_file, 'w') as file:
             json.dump(snapshot, file, indent=2, sort_keys=True)
         return 0
     except Exception as e:
-        print('[ERROR] Request exception:', e, '\r')
+        print('[ERROR] Save snapshot exception:', e, '\r')
         return e
 
 
-def submit_snapshot(snapshot):
+def post_snapshot(snapshot):
     domain = 'https://api.testing.usody.com'
     url = domain + '/api/inventory/'
     token = 'ODY5ODRlZTgtYTdjOC00ZjdiLWE1NWYtYWMyNzdmYTlmMjQxOg=='
@@ -232,21 +235,19 @@ def submit_snapshot(snapshot):
 
     try:
         response = requests.post(url, headers=post_headers, data=snapshot_json)
+        r = response.json()
         if response.status_code == 201:
-            device = response.json()['device']
-            if device.get('url') is None:
-                print('[WARNING] Snapshot JSON uploaded but an error has occurred in the creation of the device. \r')
-                print('More information on https://app.usody.com. \r')
-            else:
-                print('[INFO] Snapshot JSON successfully uploaded. \r')
-                print('[INFO] Device page: ', domain + device['url'], '\r')
-        else:
-            r = response.json()
+            print('[INFO] Snapshot JSON successfully uploaded. \r')
+            print('[INFO] Device URL: ', domain + r['url'], '\r')
+        if response.status_code == 400:
             print('[ERROR] We could not auto-upload the device. \r')
-            print('Request error:', r['code'], '-', r['type'], '-', r['message'], '\r')
-        return 0
+            print('Response error:', r, '\r')
+        else:
+            print('[WARNING] Response error:', r['code'], '-', r['type'], '\r')
+            print(r['message'][0], '\r')
+        return r
     except Exception as e:
-        print('[EXCEPTION] Request exception:', e, '\r')
+        print('[EXCEPTION] Post snapshot exception:', e, '\r')
         return e
 
 
@@ -264,6 +265,6 @@ if '__main__' == __name__:
     else:
         print('[EXCEPTION] Save exception:', rsave, '\r')
 
-    submit_snapshot(snapshot)
+    post_snapshot(snapshot)
 
     print('[INFO] ---- Workbench finished ---- \r')
