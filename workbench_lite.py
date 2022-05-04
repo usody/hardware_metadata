@@ -239,7 +239,7 @@ def post_snapshot(snapshot):
         if response.status_code == 201:
             print('[INFO] Snapshot JSON successfully uploaded. \r')
             print('[INFO] Device URL: ', domain + r['url'], '\r')
-        if response.status_code == 400:
+        elif response.status_code == 400:
             print('[ERROR] We could not auto-upload the device. \r')
             print('Response error:', r, '\r')
         else:
