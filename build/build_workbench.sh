@@ -167,6 +167,16 @@ echo -e 'workbench\nworkbench' | passwd root
 apt-get clean
 END
 
+# src https://manpages.debian.org/testing/open-infrastructure-system-boot/persistence.conf.5.en.html
+echo "/ union" > "${WB_PATH}/chroot/persistence.conf"
+
+# Creating directories
+mkdir -p ${WB_PATH}/staging/EFI/boot
+mkdir -p ${WB_PATH}/staging/boot/grub/x86_64-efi
+mkdir -p ${WB_PATH}/staging/isolinux
+mkdir -p ${WB_PATH}/staging/live
+mkdir -p ${WB_PATH}/tmp
+
 if [ ! -f "${rw_path}" ]; then
   dd if=/dev/zero of="${rw_path}" bs=10M count=1
   mkfs.vfat "${rw_path}"
@@ -179,16 +189,6 @@ tmpfs /tmp tmpfs nosuid,nodev 0 0
 ${uuid} /mnt vfat defaults 0 0
 END
 fi
-
-# src https://manpages.debian.org/testing/open-infrastructure-system-boot/persistence.conf.5.en.html
-echo "/ union" > "${WB_PATH}/chroot/persistence.conf"
-
-# Creating directories
-mkdir -p ${WB_PATH}/staging/EFI/boot
-mkdir -p ${WB_PATH}/staging/boot/grub/x86_64-efi
-mkdir -p ${WB_PATH}/staging/isolinux
-mkdir -p ${WB_PATH}/staging/live
-mkdir -p ${WB_PATH}/tmp
 
 # Compress chroot folder
 
@@ -323,6 +323,3 @@ xorrisofs \
   "${WB_PATH}/staging"
 
 printf "\n\n  Image generated in build/${wbiso_file}\n\n"
-
-# Execute iso
-# 	qemu-system-x86_64 -enable-kvm -m 2G -vga qxl -netdev user,id=wan -device virtio-net,netdev=wan,id=nic1 -drive file=build/wbiso/debian-wb-lite.iso,cache=none,if=virtio;
