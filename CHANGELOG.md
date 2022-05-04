@@ -20,6 +20,7 @@ _(dmidecode = 3.3 | smartmontools = 7.2 | hwinfo = 21.72 | lshw = 02.19 | lspci 
 
 - [added] response when snapshot parsing on the server fails
 - [added] first functional version of ISO persistence 
+- [changed] wbid to sid (snapshot id)  
 - [changed] calver scheme to YYYY.MM.PATCH
 - [changed] usb name DEBIAN_CUSTOM to WORKBENCH
 

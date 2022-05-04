@@ -21,7 +21,7 @@ class WorkbenchLite:
         self.version = '2022.4.0-beta'
         self.schema_api = '1.0.0'
 
-    def generate_wbid(self, uuid):
+    def generate_sid(self, uuid):
         from hashids import Hashids
         ALPHABET = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ1234567890'
         # TODO short hash result to 6 characters
@@ -179,8 +179,8 @@ class WorkbenchLite:
         """ Getting hardware data and generate snapshot file (json)."""
 
         # Generate WB ID base on snapshot uuid value
-        wbid = self.generate_wbid(self.snapshot_uuid)
-        print('[WBID]', wbid, '\r')
+        sid = self.generate_sid(self.snapshot_uuid)
+        print('[SNAPSHOT ID]', sid, '\r')
 
         snapshot_data = {}
         # Get hardware data and put it in snapshot
@@ -198,7 +198,7 @@ class WorkbenchLite:
             'timestamp': timestamp.isoformat(),
             'type': 'Snapshot',
             'uuid': str(self.snapshot_uuid),
-            'wbid': wbid,
+            'sid': sid,
             'software': self.software,
             'version': self.version,
             'schema_api': self.schema_api,
@@ -211,8 +211,8 @@ class WorkbenchLite:
 
 def save_snapshot(snapshot, timestamp):
     try:
-        json_file = '{date}_{wbid}_snapshot.json'.format(date=timestamp.strftime("%Y-%m-%d_%Hh%Mm%Ss"),
-                                                         wbid=snapshot['wbid'])
+        json_file = '{date}_{sid}_snapshot.json'.format(date=timestamp.strftime("%Y-%m-%d_%Hh%Mm%Ss"),
+                                                         sid=snapshot['sid'])
         with open(json_file, 'w') as file:
             json.dump(snapshot, file, indent=2, sort_keys=True)
         return 0
