@@ -244,7 +244,7 @@ def post_snapshot(snapshot):
             print('Response error:', r, '\r')
         else:
             print('[WARNING] Response error:', r['code'], '-', r['type'], '\r')
-            print(r['message'][0], '\r')
+            print(r['message'], '\r')
         return r
     except Exception as e:
         print('[EXCEPTION] Post snapshot exception:', e, '\r')
