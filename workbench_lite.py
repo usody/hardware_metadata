@@ -216,7 +216,7 @@ def save_snapshot(snapshot, timestamp):
     try:
         json_file = '{date}_{sid}_snapshot.json'.format(date=timestamp.strftime("%Y-%m-%d_%Hh%Mm%Ss"),
                                                         sid=snapshot['sid'])
-        with open(json_file, 'w') as file:
+        with open('/mnt/' + json_file, 'w+') as file:
             json.dump(snapshot, file, indent=2, sort_keys=True)
         return 0
     except Exception as e:
