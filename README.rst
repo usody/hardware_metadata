@@ -1,9 +1,9 @@
 Workbench Lite
 #########################
-A minimalist, open source tool to capture hardware data about computers generating a report on JSON file.
+An open source tool to capture hardware data about computers generating a report on JSON file.
 
 By default Workbench Lite generates a report of the hardware
-characteristics of the computer using lshw, dmidecode, hwinfo and smartmontools packages.
+characteristics of the computer using lshw, dmidecode, hwinfo, lscpi and smartmontools packages.
 
 You must run this software as root / sudo.
 
