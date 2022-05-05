@@ -322,7 +322,7 @@ EOF
   if [ "${DEBUG:-}" ]; then
     WB_VERSION='debug'
   else
-    WB_VERSION='2022.4.0-beta'
+    WB_VERSION='2022.4.1-beta'
   fi
   wbiso_file="${WB_PATH}/${WB_VERSION}_WB.iso"
 

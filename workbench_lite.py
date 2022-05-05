@@ -231,7 +231,7 @@ class WorkbenchLite:
             r = response.json()
             if response.status_code == 201:
                 print('[INFO] Snapshot JSON successfully uploaded. \r')
-                print('[INFO] Device URL: ', domain + r['url'], '\r')
+                print('[DEVICE URL]', domain + r['url'], '\r')
             elif response.status_code == 400:
                 print('[ERROR] We could not auto-upload the device. \r')
                 print('Response error:', r, '\r')
@@ -247,7 +247,7 @@ class WorkbenchLite:
 if '__main__' == __name__:
     workbench_lite = WorkbenchLite()
 
-    print('[INIT] ---- Starting Workbench ---- \r')
+    print('[INIT] ====== Starting Workbench ====== \r')
     print('[VERSION]', workbench_lite.version, '\r')
     print('[SNAPSHOT ID]', workbench_lite.sid, '\r')
 
@@ -260,4 +260,4 @@ if '__main__' == __name__:
     print('[STEP 3] ---- Uploading Snapshot ---- \r')
     workbench_lite.post_snapshot(snapshot)
 
-    print('[EXIT] ---- Workbench finished ---- \r')
+    print('[EXIT] ====== Workbench finished ====== \r')
