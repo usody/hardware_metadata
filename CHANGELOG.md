@@ -2,17 +2,45 @@
 All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/)
-and this project adheres to [Calendar Versioning](https://calver.org/#scheme) scheme (`YYYY.0M.PATCH`).
+and this project adheres to [Calendar Versioning](https://calver.org/#scheme) scheme (`YYYY.MM.PATCH`).
 
 ## prod
-[2022.03.0-alpha]
+[2022.4.1-beta]
 
 ## preprod
-[2022.03.1-alpha]
+[2022.4.1-beta]
 
 ----
 
 ## [Unreleased]
+
+## [2022.4.1-beta] - 2022/04/30
+_(dmidecode = 3.3 | smartmontools = 7.2 | hwinfo = 21.72 | lshw = 02.19 | lspci = 3.7.0)_
+
+- [fixed] timestamp generated in init
+- [added] improve feedback printing new labels and steps
+- [changed] general code structure corrections 
+
+
+## [2022.4.0-beta] - 2022/04/20
+_(dmidecode = 3.3 | smartmontools = 7.2 | hwinfo = 21.72 | lshw = 02.19 | lspci = 3.7.0)_
+
+- [added] response when snapshot parsing on the server fails
+- [added] first functional version of ISO persistence 
+- [changed] wbid to sid (snapshot id)  
+- [changed] calver scheme to YYYY.MM.PATCH
+- [changed] usb name DEBIAN_CUSTOM to WORKBENCH
+
+## [2022.03.3-alpha] - 2022/04/08
+_(dmidecode = 3.3 | smartmontools = 7.2 | hwinfo = 21.72 | lshw = 02.19 | lspci = 3.7.0)_
+
+- [fixed] timestamp iso format
+- [added] lspci package 
+- [added] new save_snapshot function
+- [added] new field shcema_api in the snapshot
+- [changed] update dict of hw data in snapshot
+- [changed] wbid to max 5 characters
+- [changed] url to submit snapshot
 
 ## [2022.03.2-alpha] - 2022/04/01
 _(dmidecode = 3.3-2 | smartmontools = 7.2-1 | hwinfo = 21.72-1 | lshw = 02.19)_

@@ -1,33 +1,37 @@
+import json
 import os
 import subprocess
-import json
 import uuid
-import requests
-
 from datetime import datetime
+
+import requests
 
 
 class WorkbenchLite:
-    """ Create a hardware report of your computer with components using dmidecode package.
+    """ Create a snapshot of your computer with hardware data and submit the information to a server.
         You must run this software as root / sudo.
     """
 
     def __init__(self):
         if os.geteuid() != 0:
             raise EnvironmentError('[ERROR] Execute WorkbenchLite as root / sudo. \r')
+        self.timestamp = datetime.now()
         self.type = 'Snapshot'
         self.snapshot_uuid = uuid.uuid4()
         self.software = 'Workbench'
-        self.version = '2022.03.2-alpha'
+        self.version = '2022.4.1-beta'
+        self.schema_api = '1.0.0'
+        # Generate WB ID base on snapshot uuid value
+        self.sid = self.generate_sid(self.snapshot_uuid)
 
-    def generate_wbid(self, uuid: uuid):
+    def generate_sid(self, uuid):
         from hashids import Hashids
         ALPHABET = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ1234567890'
         # TODO short hash result to 6 characters
-        return Hashids('', min_length=5, alphabet=ALPHABET).encode(int(uuid))
+        return Hashids('', min_length=5, alphabet=ALPHABET).encode(uuid.time_mid)
 
     def get_lshw_data(self):
-        """Get DMI table information using dmidecode command."""
+        """Get hw data using lshw command and return dict."""
         lshw_command = ['lshw -json']
         proc = subprocess.Popen(lshw_command, shell=True, stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
         lshw_output, lshw_errors = proc.communicate()
@@ -43,14 +47,14 @@ class WorkbenchLite:
             else:
                 print('[INFO] LSHW successfully completed. \r')
         elif proc.returncode < 0:
-                try:
-                    lshw_data = lshw_errors.decode('utf8')
-                except Exception as e:
-                    lshw_data = str(e)
-                    print('[EXCEPTION]', e, '\r')
-                else:
-                    print('[ERROR] LSHW failed execution with output: ', lshw_errors, '\r')
-
+            try:
+                lshw_data = lshw_errors.decode('utf8')
+            except Exception as e:
+                lshw_data = str(e)
+                print('[EXCEPTION]', e, '\r')
+            else:
+                print('[ERROR] LSHW failed execution with output: ', lshw_errors, '\r')
+        # TODO verify it returns a dict object
         return lshw_data
 
     def get_dmi_data(self):
@@ -78,10 +82,38 @@ class WorkbenchLite:
             else:
                 print('[ERROR] DMIDECODE failed execution with output: ', dmi_errors, '\r')
 
+        # TODO verify it returns a string object
         return dmidecode_data
 
+    def get_lspci_data(self):
+        """Get hardware data using lspci command."""
+        lspci_command = ['lspci -vv']
+        proc = subprocess.Popen(lspci_command, shell=True, stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
+        lspci_output, lspci_errors = proc.communicate()
+        proc.wait()
+
+        lspci_data = ''
+        if proc.returncode >= 0:
+            try:
+                lspci_data = lspci_output.decode('utf8')
+            except Exception as e:
+                lspci_data = str(e)
+                print('[EXCEPTION] LSPCI exception', e, '\r')
+            else:
+                print('[INFO] LSPCI successfully completed. \r')
+        elif proc.returncode < 0:
+            try:
+                lspci_data = lspci_errors.decode('utf8')
+            except Exception as e:
+                lspci_data = str(e)
+                print('[EXCEPTION] LSPCI exception', e, '\r')
+            else:
+                print('[ERROR] LSPCI failed execution with output: ', lspci_errors, '\r')
+        # TODO verify it returns a string object
+        return lspci_data
+
     def get_hwinfo_data(self):
-        """Get DMI table information using dmidecode command."""
+        """Get hardware data using hwinfo command."""
         hwinfo_command = ['hwinfo --reallyall']
         proc = subprocess.Popen(hwinfo_command, shell=True, stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
         hwinfo_output, hwinfo_errors = proc.communicate()
@@ -104,10 +136,11 @@ class WorkbenchLite:
                 print('[EXCEPTION] HWINFO exception', e, '\r')
             else:
                 print('[ERROR] HWINFO failed execution with output: ', hwinfo_errors, '\r')
+        # TODO verify it returns a string object
         return hwinfo_data
 
     def get_smart_data(self):
-        """Execute dmidecode command."""
+        """Get smart data of disk using smartctl command."""
         # TODO validate if get NAME or KNAME of disks
         cmd_lsblk = ["lsblk -Jdo KNAME,TYPE"]
         proc = subprocess.Popen(cmd_lsblk, shell=True, stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
@@ -124,7 +157,8 @@ class WorkbenchLite:
             for disk in disk_info['blockdevices']:
                 if disk['type'] == 'disk':
                     smart_cmd = ["smartctl -x --json=cosviu /dev/" + disk['kname']]
-                    proc_smart = subprocess.Popen(smart_cmd, shell=True, stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
+                    proc_smart = subprocess.Popen(smart_cmd, shell=True, stdout=subprocess.PIPE,
+                                                  stderr=subprocess.STDOUT)
                     smart_output, smart_errors = proc_smart.communicate()
                     proc_smart.wait()
                     # TODO improve disk data list with one key for disk
@@ -144,88 +178,86 @@ class WorkbenchLite:
         else:
             print('[ERROR] Getting disks information failed with output:', errors_lsblk, '\r')
             return [errors_lsblk]
-
+        # TODO verify it returns a list object
         return smart_data
 
     def generate_snapshot(self):
-        """ Getting hardware data and generate snapshot file (json)."""
+        """ Getting hardware data and generate snapshot object."""
 
-        # Generate WB ID base on snapshot uuid value
-        wbid = self.generate_wbid(self.snapshot_uuid)
-        print('[WBID]', wbid, '\r')
+        snapshot_data = {}
+        snapshot_data.update({'lshw': self.get_lshw_data()})
+        snapshot_data.update({'dmidecode': self.get_dmi_data()})
+        snapshot_data.update({'lspci': self.get_lspci_data()})
+        snapshot_data.update({'hwinfo': self.get_hwinfo_data()})
+        snapshot_data.update({'smart': self.get_smart_data()})
 
-        # Get hardware data
-        lshw_data = self.get_lshw_data()
-        dmi_data = self.get_dmi_data()
-        hwinfo_data = self.get_hwinfo_data()
-        smart_data = self.get_smart_data()
-        snapshot_data = {'lshw': lshw_data, 'dmidecode': dmi_data, 'hwinfo': hwinfo_data, 'smart': smart_data}
-
-        # Generate timestamp
-        timestamp = datetime.now()
-
-        # Generate and save snapshot
+        # Generate snapshot
         snapshot = {
-            'timestamp': str(timestamp),
-            'type': 'Snapshot',
+            'timestamp': self.timestamp.isoformat(),
+            'type': self.type,
             'uuid': str(self.snapshot_uuid),
-            'wbid': wbid,
-            'software': str(self.software),
-            'version': str(self.version),
+            'sid': self.sid,
+            'software': self.software,
+            'version': self.version,
+            'schema_api': self.schema_api,
             'data': snapshot_data
         }
 
-        json_file = '{date}_{wbid}_snapshot.json'.format(
-            date=timestamp.strftime("%Y-%m-%d_%Hh%Mm%Ss"),
-            wbid=wbid)
-        with open(json_file, 'w') as file:
-            json.dump(snapshot, file, indent=2)
-
-        print('[INFO] Snapshot JSON successfully saved. \r')
+        print('[INFO] Snapshot JSON successfully generated. \r')
         return snapshot
 
-    def submit_snapshot(self, snapshot):
-        domain = 'https://api.testing.usody.com'
-        url = domain + '/usodybeta/actions/'
-        token = 'ODY5ODRlZTgtYTdjOC00ZjdiLWE1NWYtYWMyNzdmYTlmMjQxOg=='
+    def save_snapshot(self, snapshot):
+        """Save snapshot like JSON file on local storage."""
+        try:
+            json_file = '{date}_{sid}_snapshot.json'.format(date=self.timestamp.strftime("%Y-%m-%d_%Hh%Mm%Ss"),
+                                                            sid=self.sid)
+            with open('/mnt/' + json_file, 'w+') as file:
+                json.dump(snapshot, file, indent=2, sort_keys=True)
+            print('[INFO] Snapshot JSON successfully saved. \r')
+            return
+        except Exception as e:
+            print('[EXCEPTION] Save snapshot:', e, '\r')
+            return e
 
+    def post_snapshot(self, snapshot):
+        """Upload snapshot to server."""
+        domain = 'https://api.testing.usody.com'
+        url = domain + '/api/inventory/'
+        token = 'ODY5ODRlZTgtYTdjOC00ZjdiLWE1NWYtYWMyNzdmYTlmMjQxOg=='
         post_headers = {'Authorization': 'Basic ' + token, 'Content-type': 'application/json'}
-        snapshot_json = json.dumps(snapshot)
 
         try:
-            response = requests.post(url, headers=post_headers, data=snapshot_json)
+            response = requests.post(url, headers=post_headers, data=json.dumps(snapshot))
+            r = response.json()
             if response.status_code == 201:
-                print('[INFO] Snapshot Uploaded. Device page: ', domain + response.json()['device']['url'])
-                return 0
+                print('[INFO] Snapshot JSON successfully uploaded. \r')
+                print('[DEVICE URL]', domain + r['url'], '\r')
+            elif response.status_code == 400:
+                print('[ERROR] We could not auto-upload the device. \r')
+                print('Response error:', r, '\r')
             else:
-                r = response.json()
-                print('[ERROR] We could not auto-upload the device. Request error:',
-                      r['code'], '-', r['type'], '-', r['message'])
-                return r
+                print('[WARNING] Response error:', r['code'], '-', r['type'], '\r')
+                print(r['message'], '\r')
+            return r
         except Exception as e:
-            print('[ERROR] Request exception:', e)
-            return -1
+            print('[EXCEPTION] Post snapshot exception:', e, '\r')
+            return e
 
 
-if __name__ == '__main__':
+if '__main__' == __name__:
     workbench_lite = WorkbenchLite()
-    print('[INFO] ---- Starting Workbench ---- \r')
+
+    print('[INIT] ====== Starting Workbench ====== \r')
     print('[VERSION]', workbench_lite.version, '\r')
+    print('[SNAPSHOT ID]', workbench_lite.sid, '\r')
+
+    print('[STEP 1] ---- Generating Snapshot ---- \r')
     snapshot = workbench_lite.generate_snapshot()
-    workbench_lite.submit_snapshot(snapshot)
-    print('[INFO] ---- Workbench finished ---- \r')
 
+    print('[STEP 2] ---- Saving Snapshot ---- \r')
+    workbench_lite.save_snapshot(snapshot)
 
-# Funciton to convert an int32 to an alphanumeric ID of 6 characters
-# Src: https://stackoverflow.com/questions/51333374/shortest-possible-generated-unique-id
-def int32_to_id(n):
-    if n == 0: return "0"
-    chars = "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ"
-    length = len(chars)
-    result = ""
-    remain = n
-    while remain > 0:
-        pos = remain % length
-        remain = remain // length
-        result = chars[pos] + result
-    return result
+    print('[STEP 3] ---- Uploading Snapshot ---- \r')
+    workbench_lite.post_snapshot(snapshot)
+
+    print('[EXIT] ====== Workbench finished ====== \r')
