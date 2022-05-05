@@ -32,4 +32,3 @@ run_tests:
 
 boot_iso:
 	qemu-system-x86_64 -enable-kvm -m 2G -vga qxl -netdev user,id=wan -device virtio-net,netdev=wan,id=nic1 -drive format=raw,file=build/wbiso/2022.4.1-beta_WB.iso,cache=none,if=virtio;
-
