@@ -5,15 +5,22 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/)
 and this project adheres to [Calendar Versioning](https://calver.org/#scheme) scheme (`YYYY.MM.PATCH`).
 
 ## prod
-[2022.03.2-alpha]
+[2022.4.1-beta]
 
 ## preprod
-[2022.03.2-alpha]
+[2022.4.1-beta]
 
 ----
 
 ## [Unreleased]
-- [fixed] empty smart field on snapshot
+
+## [2022.4.1-beta] - 2022/04/30
+_(dmidecode = 3.3 | smartmontools = 7.2 | hwinfo = 21.72 | lshw = 02.19 | lspci = 3.7.0)_
+
+- [fixed] timestamp generated in init
+- [added] improve feedback printing new labels and steps
+- [changed] general code structure corrections 
+
 
 ## [2022.4.0-beta] - 2022/04/20
 _(dmidecode = 3.3 | smartmontools = 7.2 | hwinfo = 21.72 | lshw = 02.19 | lspci = 3.7.0)_
