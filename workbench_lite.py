@@ -15,11 +15,14 @@ class WorkbenchLite:
     def __init__(self):
         if os.geteuid() != 0:
             raise EnvironmentError('[ERROR] Execute WorkbenchLite as root / sudo. \r')
+        self.timestamp = datetime.now()
         self.type = 'Snapshot'
         self.snapshot_uuid = uuid.uuid4()
         self.software = 'Workbench'
-        self.version = '2022.4.0-beta'
+        self.version = '2022.4.1-beta'
         self.schema_api = '1.0.0'
+        # Generate WB ID base on snapshot uuid value
+        self.sid = self.generate_sid(self.snapshot_uuid)
 
     def generate_sid(self, uuid):
         from hashids import Hashids
@@ -179,29 +182,21 @@ class WorkbenchLite:
         return smart_data
 
     def generate_snapshot(self):
-        """ Getting hardware data and generate snapshot file (json)."""
-
-        # Generate WB ID base on snapshot uuid value
-        sid = self.generate_sid(self.snapshot_uuid)
-        print('[SNAPSHOT ID]', sid, '\r')
+        """ Getting hardware data and generate snapshot object."""
 
         snapshot_data = {}
-        # Get hardware data and put it in snapshot
         snapshot_data.update({'lshw': self.get_lshw_data()})
         snapshot_data.update({'dmidecode': self.get_dmi_data()})
         snapshot_data.update({'lspci': self.get_lspci_data()})
         snapshot_data.update({'hwinfo': self.get_hwinfo_data()})
         snapshot_data.update({'smart': self.get_smart_data()})
 
-        # Generate snapshot timestamp
-        timestamp = datetime.now()
-
-        # Generate and save snapshot
+        # Generate snapshot
         snapshot = {
-            'timestamp': timestamp.isoformat(),
-            'type': 'Snapshot',
+            'timestamp': self.timestamp.isoformat(),
+            'type': self.type,
             'uuid': str(self.snapshot_uuid),
-            'sid': sid,
+            'sid': self.sid,
             'software': self.software,
             'version': self.version,
             'schema_api': self.schema_api,
@@ -209,62 +204,60 @@ class WorkbenchLite:
         }
 
         print('[INFO] Snapshot JSON successfully generated. \r')
-        return snapshot, timestamp
+        return snapshot
 
+    def save_snapshot(self, snapshot):
+        """Save snapshot like JSON file on local storage."""
+        try:
+            json_file = '{date}_{sid}_snapshot.json'.format(date=self.timestamp.strftime("%Y-%m-%d_%Hh%Mm%Ss"),
+                                                            sid=self.sid)
+            with open('/mnt/' + json_file, 'w+') as file:
+                json.dump(snapshot, file, indent=2, sort_keys=True)
+            print('[INFO] Snapshot JSON successfully saved. \r')
+            return
+        except Exception as e:
+            print('[EXCEPTION] Save snapshot:', e, '\r')
+            return e
 
-def save_snapshot(snapshot, timestamp):
-    try:
-        json_file = '{date}_{sid}_snapshot.json'.format(date=timestamp.strftime("%Y-%m-%d_%Hh%Mm%Ss"),
-                                                        sid=snapshot['sid'])
-        with open('/mnt/' + json_file, 'w+') as file:
-            json.dump(snapshot, file, indent=2, sort_keys=True)
-        return 0
-    except Exception as e:
-        print('[ERROR] Save snapshot exception:', e, '\r')
-        return e
+    def post_snapshot(self, snapshot):
+        """Upload snapshot to server."""
+        domain = 'https://api.testing.usody.com'
+        url = domain + '/api/inventory/'
+        token = 'ODY5ODRlZTgtYTdjOC00ZjdiLWE1NWYtYWMyNzdmYTlmMjQxOg=='
+        post_headers = {'Authorization': 'Basic ' + token, 'Content-type': 'application/json'}
 
-
-def post_snapshot(snapshot):
-    domain = 'https://api.testing.usody.com'
-    url = domain + '/api/inventory/'
-    token = 'ODY5ODRlZTgtYTdjOC00ZjdiLWE1NWYtYWMyNzdmYTlmMjQxOg=='
-
-    post_headers = {'Authorization': 'Basic ' + token, 'Content-type': 'application/json'}
-    snapshot['timestamp'] = str(snapshot['timestamp'])
-    snapshot_json = json.dumps(snapshot)
-
-    try:
-        response = requests.post(url, headers=post_headers, data=snapshot_json)
-        r = response.json()
-        if response.status_code == 201:
-            print('[INFO] Snapshot JSON successfully uploaded. \r')
-            print('[INFO] Device URL: ', domain + r['url'], '\r')
-        elif response.status_code == 400:
-            print('[ERROR] We could not auto-upload the device. \r')
-            print('Response error:', r, '\r')
-        else:
-            print('[WARNING] Response error:', r['code'], '-', r['type'], '\r')
-            print(r['message'], '\r')
-        return r
-    except Exception as e:
-        print('[EXCEPTION] Post snapshot exception:', e, '\r')
-        return e
+        try:
+            response = requests.post(url, headers=post_headers, data=json.dumps(snapshot))
+            r = response.json()
+            if response.status_code == 201:
+                print('[INFO] Snapshot JSON successfully uploaded. \r')
+                print('[INFO] Device URL: ', domain + r['url'], '\r')
+            elif response.status_code == 400:
+                print('[ERROR] We could not auto-upload the device. \r')
+                print('Response error:', r, '\r')
+            else:
+                print('[WARNING] Response error:', r['code'], '-', r['type'], '\r')
+                print(r['message'], '\r')
+            return r
+        except Exception as e:
+            print('[EXCEPTION] Post snapshot exception:', e, '\r')
+            return e
 
 
 if '__main__' == __name__:
     workbench_lite = WorkbenchLite()
 
-    print('[INFO] ---- Starting Workbench ---- \r')
+    print('[INIT] ---- Starting Workbench ---- \r')
     print('[VERSION]', workbench_lite.version, '\r')
+    print('[SNAPSHOT ID]', workbench_lite.sid, '\r')
 
-    snapshot, timestamp = workbench_lite.generate_snapshot()
+    print('[STEP 1] ---- Generating Snapshot ---- \r')
+    snapshot = workbench_lite.generate_snapshot()
 
-    rsave = save_snapshot(snapshot, timestamp)
-    if rsave == 0:
-        print('[INFO] Snapshot JSON successfully saved. \r')
-    else:
-        print('[EXCEPTION] Save exception:', rsave, '\r')
+    print('[STEP 2] ---- Saving Snapshot ---- \r')
+    workbench_lite.save_snapshot(snapshot)
 
-    post_snapshot(snapshot)
+    print('[STEP 3] ---- Uploading Snapshot ---- \r')
+    workbench_lite.post_snapshot(snapshot)
 
-    print('[INFO] ---- Workbench finished ---- \r')
+    print('[EXIT] ---- Workbench finished ---- \r')
