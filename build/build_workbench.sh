@@ -23,6 +23,8 @@ detect_user() {
 }
 
 # inspired from Ander in https://code.ungleich.ch/ungleich-public/cdist/issues/4
+# this is a way to reuse a function used inside and outside of chroot
+decide_if_update_str="$(cat <<END
 decide_if_update() {
   if [ ! -d /var/lib/apt/lists ] \
     || [ -n "$( find /etc/apt -newer /var/lib/apt/lists )" ] \
@@ -32,15 +34,15 @@ decide_if_update() {
     if [ -d /var/lib/apt/lists ]; then sudo touch /var/lib/apt/lists; fi
     apt_opts="-o Acquire::AllowReleaseInfoChange::Version=true"
     # apt update could have problems such as key expirations, proceed anyway
-    sudo apt-get "${apt_opts}" update || true
+    \${SUDO} apt-get "\${apt_opts}" update || true
   fi
 }
-
-# TODO encapsulate more into functions
-
-detect_user
+END
+)"
 
 main() {
+
+  detect_user
 
   hostname='workbench-live'
   # persistent partition
@@ -58,7 +60,7 @@ main() {
   mkdir -p ${WB_PATH}
 
   # Install requirements
-  decide_if_update
+  eval "${decide_if_update_str}" && decide_if_update
   ${SUDO} apt-get install -y \
     debootstrap \
     squashfs-tools \
@@ -98,16 +100,8 @@ if [ ! -f "\${backports_path}" ]; then
 fi
 
 # Installing packages
-if [ ! -d /var/lib/apt/lists ] \
-  || [ -n "\$( find /etc/apt -newer /var/lib/apt/lists )" ] \
-  || [ ! -f /var/cache/apt/pkgcache.bin ] \
-  || [ "\$( stat --format %Y /var/cache/apt/pkgcache.bin )" -lt "\$( date +%s -d '-1 day' )" ]
-then
-  if [ -d /var/lib/apt/lists ]; then touch /var/lib/apt/lists; fi
-  apt_opts="-o Acquire::AllowReleaseInfoChange::Version=true"
-  # apt update could have problems such as key expirations, proceed anyway
-  apt-get "\${apt_opts}" update || true
-fi
+${decide_if_update_str}
+decide_if_update
 
 apt-get install -y --no-install-recommends \
   linux-image-amd64 \
