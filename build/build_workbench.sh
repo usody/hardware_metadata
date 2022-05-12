@@ -27,9 +27,9 @@ detect_user() {
 decide_if_update_str="$(cat <<END
 decide_if_update() {
   if [ ! -d /var/lib/apt/lists ] \
-    || [ -n "$( find /etc/apt -newer /var/lib/apt/lists )" ] \
+    || [ -n "\$( find /etc/apt -newer /var/lib/apt/lists )" ] \
     || [ ! -f /var/cache/apt/pkgcache.bin ] \
-    || [ "$( stat --format %Y /var/cache/apt/pkgcache.bin )" -lt "$( date +%s -d '-1 day' )" ]
+    || [ "\$( stat --format %Y /var/cache/apt/pkgcache.bin )" -lt "\$( date +%s -d '-1 day' )" ]
   then
     if [ -d /var/lib/apt/lists ]; then sudo touch /var/lib/apt/lists; fi
     apt_opts="-o Acquire::AllowReleaseInfoChange::Version=true"
