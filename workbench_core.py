@@ -5,6 +5,7 @@ import uuid
 from datetime import datetime
 
 import requests
+from workbench_settings import WorkbenchSettings
 
 
 class WorkbenchCore:
@@ -14,13 +15,12 @@ class WorkbenchCore:
 
     def __init__(self):
         if os.geteuid() != 0:
-            print()
-            #raise EnvironmentError('[ERROR] Execute Workbench as root / sudo. \r')
+            raise EnvironmentError('[ERROR] Execute Workbench as root / sudo.', '\r')
         self.timestamp = datetime.now()
         self.type = 'Snapshot'
         self.snapshot_uuid = uuid.uuid4()
         self.software = 'Workbench'
-        self.version = '2022.4.1-beta'
+        self.version = '2022.5.0-beta'
         self.schema_api = '1.0.0'
         # Generate WB ID base on snapshot uuid value
         self.sid = self.generate_sid(self.snapshot_uuid)
@@ -46,7 +46,7 @@ class WorkbenchCore:
                 lshw_data = lshw_output.decode('utf8')
                 print('[EXCEPTION] LSHW exception', e, '\r')
             else:
-                print('[INFO] LSHW successfully completed. \r')
+                print('[INFO] LSHW successfully completed.', '\r')
         elif proc.returncode < 0:
             try:
                 lshw_data = lshw_errors.decode('utf8')
@@ -73,7 +73,7 @@ class WorkbenchCore:
                 dmidecode_data = str(e)
                 print('[EXCEPTION] DMIDECODE exception', e, '\r')
             else:
-                print('[INFO] DMIDECODE successfully completed. \r')
+                print('[INFO] DMIDECODE successfully completed.', '\r')
         elif proc.returncode < 0:
             try:
                 dmidecode_data = dmi_errors.decode('utf8')
@@ -101,7 +101,7 @@ class WorkbenchCore:
                 lspci_data = str(e)
                 print('[EXCEPTION] LSPCI exception', e, '\r')
             else:
-                print('[INFO] LSPCI successfully completed. \r')
+                print('[INFO] LSPCI successfully completed.', '\r')
         elif proc.returncode < 0:
             try:
                 lspci_data = lspci_errors.decode('utf8')
@@ -128,7 +128,7 @@ class WorkbenchCore:
                 hwinfo_data = str(e)
                 print('[EXCEPTION] HWINFO exception', e, '\r')
             else:
-                print('[INFO] HWINFO successfully completed. \r')
+                print('[INFO] HWINFO successfully completed.', '\r')
         elif proc.returncode < 0:
             try:
                 hwinfo_data = hwinfo_errors.decode('utf8')
@@ -172,7 +172,7 @@ class WorkbenchCore:
                             print('[EXCEPTION] SMART on', disk['kname'], 'exception', e, '\r')
                         else:
                             smart_data.append(disk_data)
-                            print('[INFO] SMART on', disk['kname'], 'successfully completed. \r')
+                            print('[INFO] SMART on', disk['kname'], 'successfully completed.', '\r')
                     else:
                         print('[ERROR] SMART failed on', disk['kname'], 'with output:', smart_errors, '\r')
                         smart_data.append(str(smart_errors))
@@ -204,7 +204,7 @@ class WorkbenchCore:
             'data': snapshot_data
         }
 
-        print('[INFO] Snapshot JSON successfully generated. \r')
+        print('[INFO] Snapshot JSON successfully generated.', '\r')
         return snapshot
 
     def save_snapshot(self, snapshot):
@@ -212,27 +212,26 @@ class WorkbenchCore:
         try:
             json_file = '{date}_{sid}_snapshot.json'.format(date=self.timestamp.strftime("%Y-%m-%d_%Hh%Mm%Ss"),
                                                             sid=self.sid)
-            with open('/mnt/' + json_file, 'w+') as file:
-                json.dump(snapshot, file, indent=2, sort_keys=True)
-            print('[INFO] Snapshot JSON successfully saved. \r')
-            return
+            snapshots_path = WorkbenchSettings.WB_SNAPSHOT_PATH
+            with open(snapshots_path + json_file, 'w+') as file:
+                json.dump(snapshot, file)
+            print('[INFO] Snapshot JSON successfully saved.', '\r')
         except Exception as e:
             print('[EXCEPTION] Save snapshot:', e, '\r')
             return e
 
     def post_snapshot(self, snapshot):
         """Upload snapshot to server."""
-        domain = 'https://api.testing.usody.com'
-        url = domain + '/api/inventory/'
-        token = 'ODY5ODRlZTgtYTdjOC00ZjdiLWE1NWYtYWMyNzdmYTlmMjQxOg=='
+        url = WorkbenchSettings.DH_URL
+        token = WorkbenchSettings.DH_TOKEN
         post_headers = {'Authorization': 'Basic ' + token, 'Content-type': 'application/json'}
 
         try:
             response = requests.post(url, headers=post_headers, data=json.dumps(snapshot))
             r = response.json()
             if response.status_code == 201:
-                print('[INFO] Snapshot JSON successfully uploaded. \r')
-                print('[DEVICE URL]', domain + r['url'], '\r')
+                print('[INFO] Snapshot JSON successfully uploaded.', '\r')
+                print('[DEVICE URL]', WorkbenchSettings.DH_DOMAIN + r['url'], '\r')
             elif response.status_code == 400:
                 print('[ERROR] We could not auto-upload the device. \r')
                 print('Response error:', r, '\r')
@@ -248,17 +247,17 @@ class WorkbenchCore:
 if '__main__' == __name__:
     workbench = WorkbenchCore()
 
-    print('[INIT] ====== Starting Workbench ====== \r')
+    print('[INIT] ====== Starting Workbench ======', '\r')
     print('[VERSION]', workbench.version, '\r')
     print('[SNAPSHOT ID]', workbench.sid, '\r')
 
-    print('[STEP 1] ---- Generating Snapshot ---- \r')
+    print('[STEP 1] ---- Generating Snapshot ----', '\r')
     snapshot = workbench.generate_snapshot()
 
-    print('[STEP 2] ---- Saving Snapshot ---- \r')
+    print('[STEP 2] ---- Saving Snapshot ----', '\r')
     workbench.save_snapshot(snapshot)
 
-    print('[STEP 3] ---- Uploading Snapshot ---- \r')
+    print('[STEP 3] ---- Uploading Snapshot ----', '\r')
     workbench.post_snapshot(snapshot)
 
-    print('[EXIT] ====== Workbench finished ====== \r')
+    print('[EXIT] ====== Workbench finished ======', '\r')
