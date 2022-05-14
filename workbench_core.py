@@ -7,14 +7,15 @@ from datetime import datetime
 import requests
 
 
-class WorkbenchLite:
+class WorkbenchCore:
     """ Create a snapshot of your computer with hardware data and submit the information to a server.
         You must run this software as root / sudo.
     """
 
     def __init__(self):
         if os.geteuid() != 0:
-            raise EnvironmentError('[ERROR] Execute WorkbenchLite as root / sudo. \r')
+            print()
+            #raise EnvironmentError('[ERROR] Execute Workbench as root / sudo. \r')
         self.timestamp = datetime.now()
         self.type = 'Snapshot'
         self.snapshot_uuid = uuid.uuid4()
@@ -245,19 +246,19 @@ class WorkbenchLite:
 
 
 if '__main__' == __name__:
-    workbench_lite = WorkbenchLite()
+    workbench = WorkbenchCore()
 
     print('[INIT] ====== Starting Workbench ====== \r')
-    print('[VERSION]', workbench_lite.version, '\r')
-    print('[SNAPSHOT ID]', workbench_lite.sid, '\r')
+    print('[VERSION]', workbench.version, '\r')
+    print('[SNAPSHOT ID]', workbench.sid, '\r')
 
     print('[STEP 1] ---- Generating Snapshot ---- \r')
-    snapshot = workbench_lite.generate_snapshot()
+    snapshot = workbench.generate_snapshot()
 
     print('[STEP 2] ---- Saving Snapshot ---- \r')
-    workbench_lite.save_snapshot(snapshot)
+    workbench.save_snapshot(snapshot)
 
     print('[STEP 3] ---- Uploading Snapshot ---- \r')
-    workbench_lite.post_snapshot(snapshot)
+    workbench.post_snapshot(snapshot)
 
     print('[EXIT] ====== Workbench finished ====== \r')

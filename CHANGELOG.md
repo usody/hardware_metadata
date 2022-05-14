@@ -13,6 +13,8 @@ and this project adheres to [Calendar Versioning](https://calver.org/#scheme) sc
 ----
 
 ## [Unreleased]
+- [changed] name workbench lite to workbench core
+
 
 ## [2022.4.1-beta] - 2022/04/30
 _(dmidecode = 3.3 | smartmontools = 7.2 | hwinfo = 21.72 | lshw = 02.19 | lspci = 3.7.0)_
