@@ -25,7 +25,7 @@ install_WB_dependencies:
 	sudo pip3 install -r requirements.txt
 
 run_WB:
-	python3 workbench_lite.py
+	python3 workbench_core.py
 
 run_tests:
 	python3 test.py
