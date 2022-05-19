@@ -78,7 +78,7 @@ main() {
 
   wb_dir="${WB_PATH}/chroot/opt/workbench"
   mkdir -p "${wb_dir}"
-  cp ../workbench_lite.py "${wb_dir}"
+  cp ../workbench_*.py "${wb_dir}"
   cp files/.profile "${WB_PATH}/chroot/root/"
 
   # non interactive chroot -> src https://stackoverflow.com/questions/51305706/shell-script-that-does-chroot-and-execute-commands-in-chroot
@@ -108,7 +108,7 @@ apt-get install -y --no-install-recommends \
   live-boot \
   systemd-sysv
 
-### START workbench_lite installation
+### START workbench installation
 
 echo 'Install Workbench'
 
@@ -316,7 +316,7 @@ EOF
   if [ "${DEBUG:-}" ]; then
     WB_VERSION='debug'
   else
-    WB_VERSION='2022.4.1-beta'
+    WB_VERSION='2022.5.0-beta'
   fi
   wbiso_file="${WB_PATH}/${WB_VERSION}_WB.iso"
 
