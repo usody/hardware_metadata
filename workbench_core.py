@@ -3,6 +3,7 @@ import os
 import subprocess
 import uuid
 from datetime import datetime
+from pathlib import Path
 
 import requests
 from workbench_settings import WorkbenchSettings
@@ -24,6 +25,7 @@ class WorkbenchCore:
         self.schema_api = '1.0.0'
         # Generate WB ID base on snapshot uuid value
         self.sid = self.generate_sid(self.snapshot_uuid)
+        self.snapshots_path = WorkbenchSettings.WB_SNAPSHOT_PATH
 
     def generate_sid(self, uuid):
         from hashids import Hashids
@@ -212,8 +214,9 @@ class WorkbenchCore:
         try:
             json_file = '{date}_{sid}_snapshot.json'.format(date=self.timestamp.strftime("%Y-%m-%d_%Hh%Mm%Ss"),
                                                             sid=self.sid)
-            snapshots_path = WorkbenchSettings.WB_SNAPSHOT_PATH
-            with open(snapshots_path + json_file, 'w+') as file:
+            # Create snapshot folder
+            Path(self.snapshots_path).mkdir(parents=True, exist_ok=True)
+            with open(self.snapshots_path + json_file, 'w+') as file:
                 json.dump(snapshot, file)
             print('[INFO] Snapshot JSON successfully saved.', '\r')
         except Exception as e:

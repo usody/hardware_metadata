@@ -3,7 +3,7 @@ from decouple import AutoConfig
 
 class WorkbenchSettings:
     # Path where find settings.ini file
-    config = AutoConfig(search_path='/root/wb/settings')
+    config = AutoConfig(search_path='/home/wb/settings')
 
     # Env variables for DH parameters
     DH_TOKEN = config('DH_TOKEN', default='', cast=str)
@@ -15,4 +15,4 @@ class WorkbenchSettings:
     )  # type: str
 
     # Path where store snapshot files
-    WB_SNAPSHOT_PATH = config('WB_SNAPSHOT_PATH', default='/root/wb/snapshots/')
+    WB_SNAPSHOT_PATH = config('WB_SNAPSHOT_PATH', default='/home/wb/snapshots/')
