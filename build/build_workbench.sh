@@ -3,7 +3,7 @@
 set -x
 
 # TODO verify sudo situation
-detect_user_str()="$(cat <<END
+detect_user_str="$(cat <<END
 detect_user() {
   # detect non root user without sudo
   if [ "\$(id -u)" -ne 0 ] && id \${USER} | grep -qv sudo; then
