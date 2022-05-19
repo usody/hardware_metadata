@@ -150,7 +150,6 @@ systemctl enable getty@tty1.service
 
 # other debian utilities
 apt-get install --no-install-recommends \
-  sudo \
   iproute2 iputils-ping ifupdown isc-dhcp-client \
   fdisk parted \
   curl openssh-client \
