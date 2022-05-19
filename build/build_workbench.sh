@@ -1,6 +1,7 @@
 #!/bin/sh -eu
 
 set -x
+set -e
 
 # TODO verify sudo situation
 detect_user_str="$(cat <<END
@@ -91,7 +92,9 @@ main() {
   cp files/.profile "${WB_PATH}/chroot/root/"
 
   # non interactive chroot -> src https://stackoverflow.com/questions/51305706/shell-script-that-does-chroot-and-execute-commands-in-chroot
-  ${SUDO} chroot ${WB_PATH}/chroot <<END
+  # stop apt-get from greedily reading the stdin -> src https://askubuntu.com/questions/638686/apt-get-exits-bash-script-after-installing-packages/638754#638754
+  ${SUDO} chroot ${WB_PATH}/chroot <<CHROOT
+set -x
 set -e
 
 echo "${hostname}" > /etc/hostname
@@ -125,15 +128,15 @@ apt-get install -y --no-install-recommends \
 echo 'Install Workbench'
 
 # Install WB debian requirements
-apt install --no-install-recommends \
+apt-get install -y --no-install-recommends \
   python3 python3-dev python3-pip \
-  dmidecode smartmontools hwinfo pciutils
+  dmidecode smartmontools hwinfo pciutils < /dev/null
 
 # Install WB python requirements
 pip3 install python-dateutil==2.8.2 hashids==1.3.1 requests~=2.21.0
 
 # Install lshw B02.19 utility using backports
-apt install -t ${VERSION_CODENAME}-backports lshw
+apt install -y -t ${VERSION_CODENAME}-backports lshw  < /dev/null
 
 # Autologin root user
 # src https://wiki.archlinux.org/title/getty#Automatic_login_to_virtual_console
@@ -149,13 +152,14 @@ systemctl enable getty@tty1.service
 
 
 # other debian utilities
-apt-get install --no-install-recommends \
+apt-get install -y --no-install-recommends \
   iproute2 iputils-ping ifupdown isc-dhcp-client \
   fdisk parted \
   curl openssh-client \
   less \
   jq \
-  nano vim-tiny
+  nano vim-tiny \
+  < /dev/null
 
 ###################
 # configure network
@@ -192,9 +196,9 @@ printf 'workbench\nworkbench' | passwd root
 
 # general cleanup if production image
 if [ -z "${DEBUG:-}" ]; then
-  apt-get clean
+  apt-get clean < /dev/null
 fi
-END
+CHROOT
 
   # src https://manpages.debian.org/testing/open-infrastructure-system-boot/persistence.conf.5.en.html
   echo "/ union" > "${WB_PATH}/chroot/persistence.conf"
