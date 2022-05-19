@@ -214,12 +214,13 @@ CHROOT
     dd if=/dev/zero of="${rw_path}" bs=10M count=1
     mkfs.vfat "${rw_path}"
     uuid="$(blkid "${rw_path}" | awk '{ print $3; }')"
+    # no fail on boot -> src https://askubuntu.com/questions/14365/mount-an-external-drive-at-boot-time-only-if-it-is-plugged-in/99628#99628
     cat > "${WB_PATH}/chroot/etc/fstab" <<END
 # next three lines originally appeared on fstab, we preserve them
 # UNCONFIGURED FSTAB FOR BASE SYSTEM
 overlay / overlay rw 0 0
 tmpfs /tmp tmpfs nosuid,nodev 0 0
-${uuid} /mnt vfat defaults 0 0
+${uuid} /mnt vfat defaults,nofail 0 0
 END
   fi
 
