@@ -102,6 +102,8 @@ if [ ! -f "\${backports_path}" ]; then
   printf "\${backports_repo}" > "\${backports_path}"
 fi
 
+# this env var confuses sudo detection
+unset SUDO_USER
 ${detect_user_str}
 detect_user
 
