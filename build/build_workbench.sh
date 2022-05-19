@@ -3,6 +3,88 @@
 set -x
 set -e
 
+chroot_netdns_conf_str="$(cat<<END
+###################
+# configure network
+mkdir -p /etc/network/
+cat > /etc/network/interfaces <<END2
+auto lo
+iface lo inet loopback
+
+auto eth0
+iface eth0 inet dhcp
+END2
+
+###################
+# configure dns
+cat > /etc/resolv.conf <<END2
+nameserver 1.1.1.1
+END2
+
+###################
+# configure hosts
+cat > /etc/hosts <<END2
+127.0.0.1    localhost \${hostname}
+::1          localhost ip6-localhost ip6-loopback
+ff02::1      ip6-allnodes
+ff02::2      ip6-allrouters
+END2
+END
+)"
+
+isolinuxcfg_str="$(cat<<END
+UI vesamenu.c32
+
+MENU TITLE Boot Menu
+DEFAULT linux
+TIMEOUT 10
+MENU RESOLUTION 640 480
+MENU COLOR border       30;44   #40ffffff #a0000000 std
+MENU COLOR title        1;36;44 #9033ccff #a0000000 std
+MENU COLOR sel          7;37;40 #e0ffffff #20ffffff all
+MENU COLOR unsel        37;44   #50ffffff #a0000000 std
+MENU COLOR help         37;40   #c0ffffff #a0000000 std
+MENU COLOR timeout_msg  37;40   #80ffffff #00000000 std
+MENU COLOR timeout      1;37;40 #c0ffffff #00000000 std
+MENU COLOR msg07        37;40   #90ffffff #a0000000 std
+MENU COLOR tabmsg       31;40   #30ffffff #00000000 std
+
+# THIS IS WHAT IS RUNNING NOW! (isolinux)
+# disabled predicted names -> src https://michlstechblog.info/blog/linux-disable-assignment-of-new-names-for-network-interfaces/
+LABEL linux
+  MENU LABEL Debian Live [BIOS/ISOLINUX]
+  MENU DEFAULT
+  KERNEL /live/vmlinuz
+  APPEND initrd=/live/initrd boot=live net.ifnames=0 biosdevname=0 persistence
+
+LABEL linux
+  MENU LABEL Debian Live [BIOS/ISOLINUX] (nomodeset)
+  MENU DEFAULT
+  KERNEL /live/vmlinuz
+  APPEND initrd=/live/initrd boot=live nomodeset
+END
+)"
+
+grubcfg_str="$(cat<<END
+search --set=root --file /${wbiso_name}
+
+set default="0"
+set timeout=1
+
+# If X has issues finding screens, experiment with/without nomodeset.
+
+menuentry "Debian Live [EFI/GRUB]" {
+    linux (\$root)/live/vmlinuz boot=live
+    initrd (\$root)/live/initrd
+}
+
+menuentry "Debian Live [EFI/GRUB] (nomodeset)" {
+    linux (\$root)/live/vmlinuz boot=live nomodeset
+    initrd (\$root)/live/initrd
+}
+END
+)"
+
 # TODO verify sudo situation
 detect_user_str="$(cat <<END
 detect_user() {
@@ -142,10 +224,11 @@ apt install -y -t ${VERSION_CODENAME}-backports lshw  < /dev/null
 # Autologin root user
 # src https://wiki.archlinux.org/title/getty#Automatic_login_to_virtual_console
 mkdir -p /etc/systemd/system/getty@tty1.service.d/
-touch /etc/systemd/system/getty@tty1.service.d/override.conf
-echo "[Service]" >/etc/systemd/system/getty@tty1.service.d/override.conf
-echo "ExecStart=" >>/etc/systemd/system/getty@tty1.service.d/override.conf
-echo "ExecStart=-/sbin/agetty --autologin root --noclear %I $TERM" >>/etc/systemd/system/getty@tty1.service.d/override.conf
+cat /etc/systemd/system/getty@tty1.service.d/override.conf <<END2
+[Service]
+ExecStart=
+ExecStart=-/sbin/agetty --autologin root --noclear %I \$TERM
+END2
 
 systemctl enable getty@tty1.service
 
@@ -162,31 +245,7 @@ apt-get install -y --no-install-recommends \
   nano vim-tiny \
   < /dev/null
 
-###################
-# configure network
-mkdir -p /etc/network/
-cat > /etc/network/interfaces <<END2
-auto lo
-iface lo inet loopback
-
-auto eth0
-iface eth0 inet dhcp
-END2
-
-###################
-# configure dns
-cat > /etc/resolv.conf <<END2
-nameserver 1.1.1.1
-END2
-
-###################
-# configure hosts
-cat > /etc/hosts <<END2
-127.0.0.1    localhost ${hostname}
-::1          localhost ip6-localhost ip6-loopback
-ff02::1      ip6-allnodes
-ff02::2      ip6-allrouters
-END2
+${chroot_netdns_conf_str}
 
 # Set up root user
 #   this is the root password
@@ -266,54 +325,11 @@ wbiso_name="USODY_${WB_VERSION}"
   # boot grub
   #   TIMEOUT 60 means 6 seconds :)
   cat <<EOF >${WB_PATH}/staging/isolinux/isolinux.cfg
-UI vesamenu.c32
-
-MENU TITLE Boot Menu
-DEFAULT linux
-TIMEOUT 10
-MENU RESOLUTION 640 480
-MENU COLOR border       30;44   #40ffffff #a0000000 std
-MENU COLOR title        1;36;44 #9033ccff #a0000000 std
-MENU COLOR sel          7;37;40 #e0ffffff #20ffffff all
-MENU COLOR unsel        37;44   #50ffffff #a0000000 std
-MENU COLOR help         37;40   #c0ffffff #a0000000 std
-MENU COLOR timeout_msg  37;40   #80ffffff #00000000 std
-MENU COLOR timeout      1;37;40 #c0ffffff #00000000 std
-MENU COLOR msg07        37;40   #90ffffff #a0000000 std
-MENU COLOR tabmsg       31;40   #30ffffff #00000000 std
-
-# THIS IS WHAT IS RUNNING NOW! (isolinux)
-# disabled predicted names -> src https://michlstechblog.info/blog/linux-disable-assignment-of-new-names-for-network-interfaces/
-LABEL linux
-  MENU LABEL Debian Live [BIOS/ISOLINUX]
-  MENU DEFAULT
-  KERNEL /live/vmlinuz
-  APPEND initrd=/live/initrd boot=live net.ifnames=0 biosdevname=0 persistence
-
-LABEL linux
-  MENU LABEL Debian Live [BIOS/ISOLINUX] (nomodeset)
-  MENU DEFAULT
-  KERNEL /live/vmlinuz
-  APPEND initrd=/live/initrd boot=live nomodeset
+${isolinuxcfg_str}
 EOF
 
   cat <<EOF >${WB_PATH}/staging/boot/grub/grub.cfg
-search --set=root --file /${wbiso_name}
-
-set default="0"
-set timeout=1
-
-# If X has issues finding screens, experiment with/without nomodeset.
-
-menuentry "Debian Live [EFI/GRUB]" {
-    linux (\$root)/live/vmlinuz boot=live
-    initrd (\$root)/live/initrd
-}
-
-menuentry "Debian Live [EFI/GRUB] (nomodeset)" {
-    linux (\$root)/live/vmlinuz boot=live nomodeset
-    initrd (\$root)/live/initrd
-}
+${grubcfg_str}
 EOF
 
   cat <<EOF >${WB_PATH}/tmp/grub-standalone.cfg
