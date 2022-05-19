@@ -3,24 +3,27 @@
 set -x
 
 # TODO verify sudo situation
+detect_user_str()="$(cat <<END
 detect_user() {
   # detect non root user without sudo
-  if [ "$(id -u)" -ne 0 ] && id $USER | grep -qv sudo; then
+  if [ "\$(id -u)" -ne 0 ] && id \${USER} | grep -qv sudo; then
     echo "ERROR: this script needs root or sudo permissions (current user is not part of sudo group)"
     exit 1
   # detect user with sudo or already on sudo src https://serverfault.com/questions/568627/can-a-program-tell-it-is-being-run-under-sudo/568628#568628
-  elif [ "$(id -u)" -ne 0 ] || [ -n "${SUDO_USER}" ]; then
+  elif [ "\$(id -u)" -ne 0 ] || [ -n "\${SUDO_USER}" ]; then
     SUDO='sudo'
     # jump to current dir where the script is so relative links work
-    cd "$(dirname "${0}")"
+    cd "\$(dirname "\${0}")"
     # workbench working directory to build the iso
     WB_PATH="wbiso"
   # detect pure root
-  elif [ "$(id -u)" -e 0 ]; then
+  elif [ "\$(id -u)" -e 0 ]; then
     SUDO=''
     WB_PATH="/opt/workbench_live_dev"
   fi
 }
+END
+)"
 
 # inspired from Ander in https://code.ungleich.ch/ungleich-public/cdist/issues/4
 # this is a way to reuse a function used inside and outside of chroot
@@ -42,6 +45,7 @@ END
 
 main() {
 
+  eval "${detect_user_str}"
   detect_user
 
   hostname='workbench-live'
@@ -60,7 +64,8 @@ main() {
   mkdir -p ${WB_PATH}
 
   # Install requirements
-  eval "${decide_if_update_str}" && decide_if_update
+  eval "${decide_if_update_str}"
+  decide_if_update
   ${SUDO} apt-get install -y \
     debootstrap \
     squashfs-tools \
@@ -93,11 +98,12 @@ echo "${hostname}" > /etc/hostname
 
 backports_path="/etc/apt/sources.list.d/backports.list"
 if [ ! -f "\${backports_path}" ]; then
-  echo "HOLAAAAAAAAA"
-  exit 1
   backports_repo='deb http://deb.debian.org/debian ${VERSION_CODENAME}-backports main contrib'
   printf "\${backports_repo}" > "\${backports_path}"
 fi
+
+${detect_user_str}
+detect_user
 
 # Installing packages
 ${decide_if_update_str}
