@@ -5,19 +5,21 @@ set -x
 # TODO verify sudo situation
 detect_user_str="$(cat <<END
 detect_user() {
+  userid="\$(id -u)"
   # detect non root user without sudo
-  if [ "\$(id -u)" -ne 0 ] && id \${USER} | grep -qv sudo; then
+  if [ ! "\${userid}" = 0 ] && id \${USER} | grep -qv sudo; then
     echo "ERROR: this script needs root or sudo permissions (current user is not part of sudo group)"
     exit 1
   # detect user with sudo or already on sudo src https://serverfault.com/questions/568627/can-a-program-tell-it-is-being-run-under-sudo/568628#568628
-  elif [ "\$(id -u)" -ne 0 ] || [ -n "\${SUDO_USER}" ]; then
+  elif [ ! "\${userid}" = 0 ] || [ -n "\${SUDO_USER}" ]; then
     SUDO='sudo'
+    # TODO check
     # jump to current dir where the script is so relative links work
     cd "\$(dirname "\${0}")"
     # workbench working directory to build the iso
     WB_PATH="wbiso"
   # detect pure root
-  elif [ "\$(id -u)" -e 0 ]; then
+  elif [ "\${userid}" = 0 ]; then
     SUDO=''
     WB_PATH="/opt/workbench_live_dev"
   fi
@@ -34,7 +36,9 @@ decide_if_update() {
     || [ ! -f /var/cache/apt/pkgcache.bin ] \
     || [ "\$( stat --format %Y /var/cache/apt/pkgcache.bin )" -lt "\$( date +%s -d '-1 day' )" ]
   then
-    if [ -d /var/lib/apt/lists ]; then sudo touch /var/lib/apt/lists; fi
+    if [ -d /var/lib/apt/lists ]; then
+      \${SUDO} touch /var/lib/apt/lists
+    fi
     apt_opts="-o Acquire::AllowReleaseInfoChange::Version=true"
     # apt update could have problems such as key expirations, proceed anyway
     \${SUDO} apt-get "\${apt_opts}" update || true
