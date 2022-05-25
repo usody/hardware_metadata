@@ -1,23 +1,26 @@
 #!/bin/sh -eu
 
 set -x
+set -e
 
 # TODO verify sudo situation
 detect_user_str="$(cat <<END
 detect_user() {
+  userid="\$(id -u)"
   # detect non root user without sudo
-  if [ "\$(id -u)" -ne 0 ] && id \${USER} | grep -qv sudo; then
+  if [ ! "\${userid}" = 0 ] && id \${USER} | grep -qv sudo; then
     echo "ERROR: this script needs root or sudo permissions (current user is not part of sudo group)"
     exit 1
   # detect user with sudo or already on sudo src https://serverfault.com/questions/568627/can-a-program-tell-it-is-being-run-under-sudo/568628#568628
-  elif [ "\$(id -u)" -ne 0 ] || [ -n "\${SUDO_USER}" ]; then
+  elif [ ! "\${userid}" = 0 ] || [ -n "\${SUDO_USER}" ]; then
     SUDO='sudo'
+    # TODO check
     # jump to current dir where the script is so relative links work
     cd "\$(dirname "\${0}")"
     # workbench working directory to build the iso
     WB_PATH="wbiso"
   # detect pure root
-  elif [ "\$(id -u)" -e 0 ]; then
+  elif [ "\${userid}" = 0 ]; then
     SUDO=''
     WB_PATH="/opt/workbench_live_dev"
   fi
@@ -34,7 +37,9 @@ decide_if_update() {
     || [ ! -f /var/cache/apt/pkgcache.bin ] \
     || [ "\$( stat --format %Y /var/cache/apt/pkgcache.bin )" -lt "\$( date +%s -d '-1 day' )" ]
   then
-    if [ -d /var/lib/apt/lists ]; then \${SUDO} touch /var/lib/apt/lists; fi
+    if [ -d /var/lib/apt/lists ]; then
+      \${SUDO} touch /var/lib/apt/lists
+    fi
     apt_opts="-o Acquire::AllowReleaseInfoChange::Version=true"
     # apt update could have problems such as key expirations, proceed anyway
     \${SUDO} apt-get "\${apt_opts}" update || true
@@ -83,11 +88,13 @@ main() {
 
   wb_dir="${WB_PATH}/chroot/opt/workbench"
   mkdir -p "${wb_dir}"
-  cp ../workbench_*.py "${wb_dir}"
+  cp ../workbench_lite.py "${wb_dir}"
   cp files/.profile "${WB_PATH}/chroot/root/"
 
   # non interactive chroot -> src https://stackoverflow.com/questions/51305706/shell-script-that-does-chroot-and-execute-commands-in-chroot
-  ${SUDO} chroot ${WB_PATH}/chroot <<END
+  # stop apt-get from greedily reading the stdin -> src https://askubuntu.com/questions/638686/apt-get-exits-bash-script-after-installing-packages/638754#638754
+  ${SUDO} chroot ${WB_PATH}/chroot <<CHROOT
+set -x
 set -e
 
 echo "${hostname}" > /etc/hostname
@@ -116,20 +123,20 @@ apt-get install -y --no-install-recommends \
   live-boot \
   systemd-sysv
 
-### START workbench installation
+### START workbench_lite installation
 
 echo 'Install Workbench'
 
 # Install WB debian requirements
-apt install --no-install-recommends \
+apt-get install -y --no-install-recommends \
   python3 python3-dev python3-pip \
-  dmidecode smartmontools hwinfo pciutils
+  dmidecode smartmontools hwinfo pciutils < /dev/null
 
 # Install WB python requirements
-pip3 install python-dateutil==2.8.2 hashids==1.3.1 requests~=2.21.0 python-decouple==3.3
+pip3 install python-dateutil==2.8.2 hashids==1.3.1 requests~=2.21.0
 
 # Install lshw B02.19 utility using backports
-apt install -t ${VERSION_CODENAME}-backports lshw
+apt install -y -t ${VERSION_CODENAME}-backports lshw  < /dev/null
 
 # Autologin root user
 # src https://wiki.archlinux.org/title/getty#Automatic_login_to_virtual_console
@@ -145,13 +152,14 @@ systemctl enable getty@tty1.service
 
 
 # other debian utilities
-apt-get install --no-install-recommends \
+apt-get install -y --no-install-recommends \
   iproute2 iputils-ping ifupdown isc-dhcp-client \
   fdisk parted \
   curl openssh-client \
   less \
   jq \
-  nano vim-tiny
+  nano vim-tiny \
+  < /dev/null
 
 ###################
 # configure network
@@ -188,9 +196,9 @@ printf 'workbench\nworkbench' | passwd root
 
 # general cleanup if production image
 if [ -z "${DEBUG:-}" ]; then
-  apt-get clean
+  apt-get clean < /dev/null
 fi
-END
+CHROOT
 
   # src https://manpages.debian.org/testing/open-infrastructure-system-boot/persistence.conf.5.en.html
   echo "/ union" > "${WB_PATH}/chroot/persistence.conf"
@@ -206,12 +214,13 @@ END
     dd if=/dev/zero of="${rw_path}" bs=10M count=1
     mkfs.vfat "${rw_path}"
     uuid="$(blkid "${rw_path}" | awk '{ print $3; }')"
+    # no fail on boot -> src https://askubuntu.com/questions/14365/mount-an-external-drive-at-boot-time-only-if-it-is-plugged-in/99628#99628
     cat > "${WB_PATH}/chroot/etc/fstab" <<END
 # next three lines originally appeared on fstab, we preserve them
 # UNCONFIGURED FSTAB FOR BASE SYSTEM
 overlay / overlay rw 0 0
 tmpfs /tmp tmpfs nosuid,nodev 0 0
-${uuid} /home vfat defaults 0 0
+${uuid} /mnt vfat defaults,nofail 0 0
 END
   fi
 
@@ -323,7 +332,7 @@ EOF
   if [ "${DEBUG:-}" ]; then
     WB_VERSION='debug'
   else
-    WB_VERSION='2022.5.0-beta'
+    WB_VERSION='2022.4.1-beta'
   fi
   wbiso_file="${WB_PATH}/${WB_VERSION}_WB.iso"
 
