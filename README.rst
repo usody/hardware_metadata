@@ -47,7 +47,7 @@ Also you can run Workbench manually like the following way:
 
 .. code-block::
 
-    sudo python3 <project-folder>/workbench_lite.py
+    sudo python3 <project-folder>/workbench_core.py
 
 At the end of the execution, generates a json file with the hardware information collected from your computer,
 called '*{date}_{wbid}_snapshot.json*'.
