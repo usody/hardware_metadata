@@ -88,7 +88,7 @@ main() {
 
   wb_dir="${WB_PATH}/chroot/opt/workbench"
   mkdir -p "${wb_dir}"
-  cp ../workbench_lite.py "${wb_dir}"
+  cp ../workbench_*.py "${wb_dir}"
   cp files/.profile "${WB_PATH}/chroot/root/"
 
   # non interactive chroot -> src https://stackoverflow.com/questions/51305706/shell-script-that-does-chroot-and-execute-commands-in-chroot
