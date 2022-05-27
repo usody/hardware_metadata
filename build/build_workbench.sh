@@ -133,7 +133,7 @@ apt-get install -y --no-install-recommends \
   dmidecode smartmontools hwinfo pciutils < /dev/null
 
 # Install WB python requirements
-pip3 install python-dateutil==2.8.2 hashids==1.3.1 requests~=2.21.0
+pip3 install python-dateutil==2.8.2 hashids==1.3.1 requests~=2.21.0 python-decouple==3.3
 
 # Install lshw B02.19 utility using backports
 apt install -y -t ${VERSION_CODENAME}-backports lshw  < /dev/null
@@ -332,7 +332,7 @@ EOF
   if [ "${DEBUG:-}" ]; then
     WB_VERSION='debug'
   else
-    WB_VERSION='2022.4.1-beta'
+    WB_VERSION='2022.5.1-beta'
   fi
   wbiso_file="${WB_PATH}/${WB_VERSION}_WB.iso"
 
