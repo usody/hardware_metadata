@@ -1,57 +1,46 @@
 #!/bin/sh -eu
 
 set -x
-set -e
 
 # TODO verify sudo situation
-detect_user_str="$(cat <<END
 detect_user() {
-  userid="\$(id -u)"
   # detect non root user without sudo
-  if [ ! "\${userid}" = 0 ] && id \${USER} | grep -qv sudo; then
+  if [ "$(id -u)" -ne 0 ] && id $USER | grep -qv sudo; then
     echo "ERROR: this script needs root or sudo permissions (current user is not part of sudo group)"
     exit 1
   # detect user with sudo or already on sudo src https://serverfault.com/questions/568627/can-a-program-tell-it-is-being-run-under-sudo/568628#568628
-  elif [ ! "\${userid}" = 0 ] || [ -n "\${SUDO_USER}" ]; then
+  elif [ "$(id -u)" -ne 0 ] || [ -n "${SUDO_USER}" ]; then
     SUDO='sudo'
-    # TODO check
     # jump to current dir where the script is so relative links work
-    cd "\$(dirname "\${0}")"
+    cd "$(dirname "${0}")"
     # workbench working directory to build the iso
     WB_PATH="wbiso"
   # detect pure root
-  elif [ "\${userid}" = 0 ]; then
+  elif [ "$(id -u)" -e 0 ]; then
     SUDO=''
     WB_PATH="/opt/workbench_live_dev"
   fi
 }
-END
-)"
 
 # inspired from Ander in https://code.ungleich.ch/ungleich-public/cdist/issues/4
-# this is a way to reuse a function used inside and outside of chroot
-decide_if_update_str="$(cat <<END
 decide_if_update() {
   if [ ! -d /var/lib/apt/lists ] \
-    || [ -n "\$( find /etc/apt -newer /var/lib/apt/lists )" ] \
+    || [ -n "$( find /etc/apt -newer /var/lib/apt/lists )" ] \
     || [ ! -f /var/cache/apt/pkgcache.bin ] \
-    || [ "\$( stat --format %Y /var/cache/apt/pkgcache.bin )" -lt "\$( date +%s -d '-1 day' )" ]
+    || [ "$( stat --format %Y /var/cache/apt/pkgcache.bin )" -lt "$( date +%s -d '-1 day' )" ]
   then
-    if [ -d /var/lib/apt/lists ]; then
-      \${SUDO} touch /var/lib/apt/lists
-    fi
+    if [ -d /var/lib/apt/lists ]; then sudo touch /var/lib/apt/lists; fi
     apt_opts="-o Acquire::AllowReleaseInfoChange::Version=true"
     # apt update could have problems such as key expirations, proceed anyway
-    \${SUDO} apt-get "\${apt_opts}" update || true
+    sudo apt-get "${apt_opts}" update || true
   fi
 }
-END
-)"
+
+# TODO encapsulate more into functions
+
+detect_user
 
 main() {
-
-  eval "${detect_user_str}"
-  detect_user
 
   hostname='workbench-live'
   # persistent partition
@@ -69,7 +58,6 @@ main() {
   mkdir -p ${WB_PATH}
 
   # Install requirements
-  eval "${decide_if_update_str}"
   decide_if_update
   ${SUDO} apt-get install -y \
     debootstrap \
@@ -88,13 +76,11 @@ main() {
 
   wb_dir="${WB_PATH}/chroot/opt/workbench"
   mkdir -p "${wb_dir}"
-  cp ../workbench_*.py "${wb_dir}"
+  cp ../workbench_lite.py "${wb_dir}"
   cp files/.profile "${WB_PATH}/chroot/root/"
 
   # non interactive chroot -> src https://stackoverflow.com/questions/51305706/shell-script-that-does-chroot-and-execute-commands-in-chroot
-  # stop apt-get from greedily reading the stdin -> src https://askubuntu.com/questions/638686/apt-get-exits-bash-script-after-installing-packages/638754#638754
-  ${SUDO} chroot ${WB_PATH}/chroot <<CHROOT
-set -x
+  ${SUDO} chroot ${WB_PATH}/chroot <<END
 set -e
 
 echo "${hostname}" > /etc/hostname
@@ -105,18 +91,23 @@ echo "${hostname}" > /etc/hostname
 
 backports_path="/etc/apt/sources.list.d/backports.list"
 if [ ! -f "\${backports_path}" ]; then
+  echo "HOLAAAAAAAAA"
+  exit 1
   backports_repo='deb http://deb.debian.org/debian ${VERSION_CODENAME}-backports main contrib'
   printf "\${backports_repo}" > "\${backports_path}"
 fi
 
-# this env var confuses sudo detection
-unset SUDO_USER
-${detect_user_str}
-detect_user
-
 # Installing packages
-${decide_if_update_str}
-decide_if_update
+if [ ! -d /var/lib/apt/lists ] \
+  || [ -n "\$( find /etc/apt -newer /var/lib/apt/lists )" ] \
+  || [ ! -f /var/cache/apt/pkgcache.bin ] \
+  || [ "\$( stat --format %Y /var/cache/apt/pkgcache.bin )" -lt "\$( date +%s -d '-1 day' )" ]
+then
+  if [ -d /var/lib/apt/lists ]; then touch /var/lib/apt/lists; fi
+  apt_opts="-o Acquire::AllowReleaseInfoChange::Version=true"
+  # apt update could have problems such as key expirations, proceed anyway
+  apt-get "\${apt_opts}" update || true
+fi
 
 apt-get install -y --no-install-recommends \
   linux-image-amd64 \
@@ -128,15 +119,15 @@ apt-get install -y --no-install-recommends \
 echo 'Install Workbench'
 
 # Install WB debian requirements
-apt-get install -y --no-install-recommends \
+apt install --no-install-recommends \
   python3 python3-dev python3-pip \
-  dmidecode smartmontools hwinfo pciutils < /dev/null
+  dmidecode smartmontools hwinfo pciutils
 
 # Install WB python requirements
-pip3 install python-dateutil==2.8.2 hashids==1.3.1 requests~=2.21.0 python-decouple==3.3
+pip3 install python-dateutil==2.8.2 hashids==1.3.1 requests~=2.21.0
 
 # Install lshw B02.19 utility using backports
-apt install -y -t ${VERSION_CODENAME}-backports lshw  < /dev/null
+apt install -t ${VERSION_CODENAME}-backports lshw
 
 # Autologin root user
 # src https://wiki.archlinux.org/title/getty#Automatic_login_to_virtual_console
@@ -152,14 +143,14 @@ systemctl enable getty@tty1.service
 
 
 # other debian utilities
-apt-get install -y --no-install-recommends \
+apt-get install --no-install-recommends \
+  sudo \
   iproute2 iputils-ping ifupdown isc-dhcp-client \
   fdisk parted \
   curl openssh-client \
   less \
   jq \
-  nano vim-tiny \
-  < /dev/null
+  nano vim-tiny
 
 ###################
 # configure network
@@ -196,9 +187,9 @@ printf 'workbench\nworkbench' | passwd root
 
 # general cleanup if production image
 if [ -z "${DEBUG:-}" ]; then
-  apt-get clean < /dev/null
+  apt-get clean
 fi
-CHROOT
+END
 
   # src https://manpages.debian.org/testing/open-infrastructure-system-boot/persistence.conf.5.en.html
   echo "/ union" > "${WB_PATH}/chroot/persistence.conf"
@@ -214,13 +205,12 @@ CHROOT
     dd if=/dev/zero of="${rw_path}" bs=10M count=1
     mkfs.vfat "${rw_path}"
     uuid="$(blkid "${rw_path}" | awk '{ print $3; }')"
-    # no fail on boot -> src https://askubuntu.com/questions/14365/mount-an-external-drive-at-boot-time-only-if-it-is-plugged-in/99628#99628
     cat > "${WB_PATH}/chroot/etc/fstab" <<END
 # next three lines originally appeared on fstab, we preserve them
 # UNCONFIGURED FSTAB FOR BASE SYSTEM
 overlay / overlay rw 0 0
 tmpfs /tmp tmpfs nosuid,nodev 0 0
-${uuid} /mnt vfat defaults,nofail 0 0
+${uuid} /mnt vfat defaults 0 0
 END
   fi
 
@@ -332,7 +322,7 @@ EOF
   if [ "${DEBUG:-}" ]; then
     WB_VERSION='debug'
   else
-    WB_VERSION='2022.5.1-beta'
+    WB_VERSION='2022.4.1-beta'
   fi
   wbiso_file="${WB_PATH}/${WB_VERSION}_WB.iso"
 
