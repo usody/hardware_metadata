@@ -4,7 +4,7 @@ from unittest.mock import patch
 from io import StringIO
 import unittest
 
-import workbench_core
+from workbench_core import WorkbenchCore
 
 
 def get_snapshot(file_name: str) -> dict:
@@ -14,7 +14,7 @@ def get_snapshot(file_name: str) -> dict:
 
 
 class TestWorkbenchLite(unittest.TestCase):
-    workbench = workbench_core.WorkbenchCore()
+    workbench = WorkbenchCore()
 
     @patch('sys.stdout', new_callable=StringIO)
     def test_generate_snapshot__check_stdout(self, stdout):
