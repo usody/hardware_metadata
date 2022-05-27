@@ -25,10 +25,10 @@ install_WB_dependencies:
 	sudo pip3 install -r requirements.txt
 
 run_WB:
-	python3 workbench_lite.py
+	python3 workbench_core.py
 
 run_tests:
-	python3 test.py
+	python3 tests/test.py
 
 boot_iso:
-	qemu-system-x86_64 -enable-kvm -m 2G -vga qxl -netdev user,id=wan -device virtio-net,netdev=wan,id=nic1 -drive format=raw,file=build/wbiso/2022.4.1-beta_WB.iso,cache=none,if=virtio;
+	qemu-system-x86_64 -enable-kvm -m 2G -vga qxl -netdev user,id=wan -device virtio-net,netdev=wan,id=nic1 -drive format=raw,file=build/wbiso/2022.5.1-beta_WB.iso,cache=none,if=virtio;
