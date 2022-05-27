@@ -21,6 +21,7 @@ _(dmidecode = 3.3 | smartmontools = 7.2 | hwinfo = 21.72 | lshw = 02.19 | lspci 
 - [added] settings file using python-decouple
 - [added] WIP test suite folder
 - [changed] remove sudo dependency
+- [changed] settings default path
 - [removed] DH_DOMAIN & DH_SCHEMA vars on settings
 
 ## [2022.5.0-beta] - 2022/05/14

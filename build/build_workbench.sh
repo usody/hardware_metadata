@@ -220,7 +220,7 @@ CHROOT
 # UNCONFIGURED FSTAB FOR BASE SYSTEM
 overlay / overlay rw 0 0
 tmpfs /tmp tmpfs nosuid,nodev 0 0
-${uuid} /mnt vfat defaults,nofail 0 0
+${uuid} /wb vfat defaults,nofail 0 0
 END
   fi
 
