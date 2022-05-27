@@ -21,7 +21,7 @@ class WorkbenchCore:
         self.type = 'Snapshot'
         self.snapshot_uuid = uuid.uuid4()
         self.software = 'Workbench'
-        self.version = '2022.5.0-beta'
+        self.version = '2022.5.1-beta'
         self.schema_api = '1.0.0'
         # Generate WB ID base on snapshot uuid value
         self.sid = self.generate_sid(self.snapshot_uuid)
@@ -229,12 +229,14 @@ class WorkbenchCore:
         token = WorkbenchSettings.DH_TOKEN
         post_headers = {'Authorization': 'Basic ' + token, 'Content-type': 'application/json'}
 
+        print('[DH URL]', url, '\r')
+
         try:
             response = requests.post(url, headers=post_headers, data=json.dumps(snapshot))
             r = response.json()
             if response.status_code == 201:
                 print('[INFO] Snapshot JSON successfully uploaded.', '\r')
-                print('[DEVICE URL]', WorkbenchSettings.DH_DOMAIN + r['url'], '\r')
+                print('[DHID]', r['url'], '\r')
             elif response.status_code == 400:
                 print('[ERROR] We could not auto-upload the device. \r')
                 print('Response error:', r, '\r')

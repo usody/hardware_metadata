@@ -14,11 +14,19 @@ and this project adheres to [Calendar Versioning](https://calver.org/#scheme) sc
 
 ## [Unreleased]
 
+## [2022.5.1-beta] - 2022/05/24
+_(dmidecode = 3.3 | smartmontools = 7.2 | hwinfo = 21.72 | lshw = 02.19 | lspci = 3.7.0)_
+
+- [fixed] set root password correctly to the first build
+- [added] settings file using python-decouple
+- [added] WIP test suite folder
+- [changed] remove sudo dependency
+- [removed] DH_DOMAIN & DH_SCHEMA vars on settings
+
 ## [2022.5.0-beta] - 2022/05/14
 _(dmidecode = 3.3 | smartmontools = 7.2 | hwinfo = 21.72 | lshw = 02.19 | lspci = 3.7.0)_
 
 - [fixed] timestamp generated in init
-- [added] settings decouple
 - [changed] name workbench lite to workbench core
 
 
