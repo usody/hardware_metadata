@@ -55,7 +55,8 @@ main() {
 
   hostname='workbench-live'
   # persistent partition
-  rw_path="${WB_PATH}/staging/wbp_vfat.img"
+  rw_img_name="wbp_vfat.img"
+  rw_img_path="${WB_PATH}/staging/${rw_img_name}"
 
   # version of debian the bootstrap is going to build
   #   if no VERSION_CODENAME is specified we assume that the bootstrap is going to
@@ -210,17 +211,28 @@ CHROOT
   mkdir -p ${WB_PATH}/staging/live
   mkdir -p ${WB_PATH}/tmp
 
-  if [ ! -f "${rw_path}" ]; then
-    dd if=/dev/zero of="${rw_path}" bs=10M count=1
-    mkfs.vfat "${rw_path}"
-    uuid="$(blkid "${rw_path}" | awk '{ print $3; }')"
+  if [ ! -f "${rw_img_path}" || "${DEBUG:-}" ]; then
+    dd if=/dev/zero of="${rw_img_path}" bs=10M count=1
+    mkfs.vfat "${rw_img_path}"
+
+    # generate structure on persistent partition
+    tmp_rw_mount="/tmp/${rw_img_name}"
+    ${SUDO} umount -f -l "${tmp_rw_mount}" >/dev/null 2>&1 || true
+    mkdir -p "${tmp_rw_mount}"
+    ${SUDO} mount "$(pwd)/${rw_img_path}" "${tmp_rw_mount}"
+    ${SUDO} mkdir -p "${tmp_rw_mount}/wb_settings"
+    ${SUDO} touch "${tmp_rw_mount}/wb_settings/settings.ini"
+    ${SUDO} mkdir -p "${tmp_rw_mount}/wb_snapshots"
+    ${SUDO} umount "${tmp_rw_mount}"
+
+    uuid="$(blkid "${rw_img_path}" | awk '{ print $3; }')"
     # no fail on boot -> src https://askubuntu.com/questions/14365/mount-an-external-drive-at-boot-time-only-if-it-is-plugged-in/99628#99628
     cat > "${WB_PATH}/chroot/etc/fstab" <<END
 # next three lines originally appeared on fstab, we preserve them
 # UNCONFIGURED FSTAB FOR BASE SYSTEM
 overlay / overlay rw 0 0
 tmpfs /tmp tmpfs nosuid,nodev 0 0
-${uuid} /wb vfat defaults,nofail 0 0
+${uuid} /mnt vfat defaults,nofail 0 0
 END
   fi
 
@@ -353,7 +365,7 @@ EOF
       -no-emul-boot \
       -isohybrid-gpt-basdat \
     -append_partition 2 0xef ${WB_PATH}/staging/EFI/boot/efiboot.img \
-    -append_partition 3 0x14 "${rw_path}" \
+    -append_partition 3 0x14 "${rw_img_path}" \
     "${WB_PATH}/staging"
 
   printf "\n\n  Image generated in build/${wbiso_file}\n\n"
