@@ -6,8 +6,8 @@ class WorkbenchSettings:
     config = AutoConfig(search_path='/wb_settings/')
 
     # Env variables for DH parameters
-    DH_TOKEN = config('DH_TOKEN', default='')
-    DH_URL = config('DH_URL', default='')
+    DH_TOKEN = config('DH_TOKEN', default='', cast=str)
+    DH_URL = config('DH_URL', default='', cast=str)
 
     # Path where store snapshot files
-    WB_SNAPSHOT_PATH = config('WB_SNAPSHOT_PATH', default='/wb_snapshots/')
+    WB_SNAPSHOT_PATH = config('WB_SNAPSHOT_PATH', default='/wb_snapshots/', cast=str)
