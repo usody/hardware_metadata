@@ -17,7 +17,7 @@ class WorkbenchCore:
 
     def __init__(self):
         if os.geteuid() != 0:
-            raise EnvironmentError('[ERROR] Execute Workbench as root / sudo.', '\r')
+            raise EnvironmentError('[ERROR] Execute Workbench as root / sudo.')
         self.timestamp = datetime.now()
         self.type = 'Snapshot'
         self.snapshot_uuid = uuid.uuid4()
@@ -154,7 +154,7 @@ class WorkbenchCore:
         try:
             disk_info = json.loads(output_lsblk.decode('utf8'))
         except Exception as e:
-            print('[EXCEPTION] Detecting disks information', e, '/r')
+            print('[EXCEPTION] Detecting disks information', e)
 
         smart_data = []
         if proc.returncode == 0:
@@ -172,15 +172,15 @@ class WorkbenchCore:
                             disk_data = json.loads(smart_output.decode('utf8'))
                         except Exception as e:
                             smart_data.append(str(smart_output))
-                            print('[EXCEPTION] SMART on', disk['kname'], 'exception', e, '\r')
+                            print('[EXCEPTION] SMART on', disk['kname'], 'exception', e)
                         else:
                             smart_data.append(disk_data)
-                            print('[INFO] SMART on', disk['kname'], 'successfully completed.', '\r')
+                            print('[INFO] SMART on', disk['kname'], 'successfully completed.')
                     else:
-                        print('[ERROR] SMART failed on', disk['kname'], 'with output:', smart_errors, '\r')
+                        print('[ERROR] SMART failed on', disk['kname'], 'with output:', smart_errors)
                         smart_data.append(str(smart_errors))
         else:
-            print('[ERROR] Getting disks information failed with output:', errors_lsblk, '\r')
+            print('[ERROR] Getting disks information failed with output:', errors_lsblk)
             return [errors_lsblk]
         # TODO verify it returns a list object
         return smart_data
@@ -207,7 +207,7 @@ class WorkbenchCore:
             'data': snapshot_data
         }
 
-        print('[INFO] Snapshot JSON successfully generated.', '\r')
+        print('[INFO] Snapshot JSON successfully generated.')
         return snapshot
 
     def save_snapshot(self, snapshot):
@@ -219,9 +219,9 @@ class WorkbenchCore:
             Path(self.snapshots_path).mkdir(parents=True, exist_ok=True)
             with open(self.snapshots_path + json_file, 'w+') as file:
                 json.dump(snapshot, file)
-            print('[INFO] Snapshot JSON successfully saved.', '\r')
+            print('[INFO] Snapshot JSON successfully saved.')
         except Exception as e:
-            print('[EXCEPTION] Save snapshot:', e, '\r')
+            print('[EXCEPTION] Save snapshot:', e)
             return e
 
     def post_snapshot(self, snapshot):
@@ -230,45 +230,43 @@ class WorkbenchCore:
         token = WorkbenchSettings.DH_TOKEN
 
         if url and token:
-            print('[DH URL]', url, '\r')
+            print('[DH URL]', url)
             post_headers = {'Authorization': 'Basic ' + token, 'Content-type': 'application/json'}
 
             try:
                 response = requests.post(url, headers=post_headers, data=json.dumps(snapshot))
                 r = response.json()
                 if response.status_code == 201:
-                    print('[INFO] Snapshot JSON successfully uploaded.', '\r')
-                    print('[DHID]', r['url'], '\r')
+                    print('[INFO] Snapshot JSON successfully uploaded.')
+                    print('[DEVICE ID]', r['url'])
                 elif response.status_code == 400:
-                    print('[ERROR] We could not auto-upload the device. \r')
-                    print('Response error:', r, '\r')
+                    print('[ERROR] We could not auto-upload the device.', response.status_code, '-', response.reason)
+                    print('Response error:', r)
                 else:
-                    print('[ERROR] We could not auto-upload the device. \r')
-                    print('Response error:', r['code'], '-', r['type'], '\r')
-                    print(r['message'], '\r')
+                    print('[ERROR] We could not auto-upload the device.')
+                    print('Response error:', r['code'], '-', r['type'], '-', r['message'])
                 return r
             except Exception as e:
-                print('[EXCEPTION] Post snapshot exception:', e, '\r')
+                print('[EXCEPTION] Post snapshot exception:', e)
                 return e
         else:
-            print('[WARNING] We could not auto-upload the device.', '\r')
-            print('More info: Settings URL or TOKEN are empty', '\r')
+            print('[WARNING] We could not auto-upload the device. Settings URL or TOKEN are empty.')
 
 
 if '__main__' == __name__:
     workbench = WorkbenchCore()
 
-    print('[INIT] ====== Starting Workbench ======', '\r')
-    print('[VERSION]', workbench.version, '\r')
-    print('[SNAPSHOT ID]', workbench.sid, '\r')
+    print('[INIT] ====== Starting Workbench ======')
+    print('[VERSION]', workbench.version)
+    print('[SNAPSHOT ID]', workbench.sid)
 
-    print('[STEP 1] ---- Generating Snapshot ----', '\r')
+    print('[STEP 1] ---- Generating Snapshot ----')
     snapshot = workbench.generate_snapshot()
 
-    print('[STEP 2] ---- Saving Snapshot ----', '\r')
+    print('[STEP 2] ---- Saving Snapshot ----')
     workbench.save_snapshot(snapshot)
 
-    print('[STEP 3] ---- Uploading Snapshot ----', '\r')
+    print('[STEP 3] ---- Uploading Snapshot ----')
     workbench.post_snapshot(snapshot)
 
-    print('[EXIT] ====== Workbench finished ======', '\r')
+    print('[EXIT] ====== Workbench finished ======')
