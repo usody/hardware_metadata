@@ -6,6 +6,7 @@ from datetime import datetime
 from pathlib import Path
 
 import requests
+
 from workbench_settings import WorkbenchSettings
 
 
@@ -229,24 +230,29 @@ class WorkbenchCore:
         token = WorkbenchSettings.DH_TOKEN
         post_headers = {'Authorization': 'Basic ' + token, 'Content-type': 'application/json'}
 
-        print('[DH URL]', url, '\r')
+        if url and token:
+            print('[DH URL]', url, '\r')
 
-        try:
-            response = requests.post(url, headers=post_headers, data=json.dumps(snapshot))
-            r = response.json()
-            if response.status_code == 201:
-                print('[INFO] Snapshot JSON successfully uploaded.', '\r')
-                print('[DHID]', r['url'], '\r')
-            elif response.status_code == 400:
-                print('[ERROR] We could not auto-upload the device. \r')
-                print('Response error:', r, '\r')
-            else:
-                print('[WARNING] Response error:', r['code'], '-', r['type'], '\r')
-                print(r['message'], '\r')
-            return r
-        except Exception as e:
-            print('[EXCEPTION] Post snapshot exception:', e, '\r')
-            return e
+            try:
+                response = requests.post(url, headers=post_headers, data=json.dumps(snapshot))
+                r = response.json()
+                if response.status_code == 201:
+                    print('[INFO] Snapshot JSON successfully uploaded.', '\r')
+                    print('[DHID]', r['url'], '\r')
+                elif response.status_code == 400:
+                    print('[ERROR] We could not auto-upload the device. \r')
+                    print('Response error:', r, '\r')
+                else:
+                    print('[ERROR] We could not auto-upload the device. \r')
+                    print('Response error:', r['code'], '-', r['type'], '\r')
+                    print(r['message'], '\r')
+                return r
+            except Exception as e:
+                print('[EXCEPTION] Post snapshot exception:', e, '\r')
+                return e
+        else:
+            print('[WARNING] We could not auto-upload the device.', '\r')
+            print('More info: Settings URL or TOKEN are empty', '\r')
 
 
 if '__main__' == __name__:
