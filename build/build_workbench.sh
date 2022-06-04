@@ -241,7 +241,13 @@ END
   # Faster squashfs when debugging -> src https://forums.fedoraforum.org/showthread.php?284366-squashfs-wo-compression-speed-up
   if [ "${DEBUG:-}" ]; then
     DEBUG_SQUASHFS_ARGS='-noI -noD -noF -noX'
+    WB_VERSION='debug'
+  else
+    WB_VERSION='2022.5.1-beta'
   fi
+
+wbiso_name="USODY_${WB_VERSION}"
+
 
   # why squashfs -> https://unix.stackexchange.com/questions/163190/why-do-liveusbs-use-squashfs-and-similar-file-systems
   # noappend option needed to avoid this situation -> https://unix.stackexchange.com/questions/80447/merging-preexisting-source-folders-in-mksquashfs
@@ -292,7 +298,7 @@ LABEL linux
 EOF
 
   cat <<EOF >${WB_PATH}/staging/boot/grub/grub.cfg
-search --set=root --file /WORKBENCH
+search --set=root --file /${wbiso_name}
 
 set default="0"
 set timeout=1
@@ -316,7 +322,7 @@ set prefix=(\$root)/boot/grub/
 configfile /boot/grub/grub.cfg
 EOF
 
-  touch ${WB_PATH}/staging/WORKBENCH
+  touch ${WB_PATH}/staging/${wbiso_name}
 
   ## Bootloaders
 
@@ -340,19 +346,14 @@ EOF
       mcopy -vi efiboot.img ../../../tmp/bootx64.efi ::efi/boot/
   )
 
-  # Creating ISO
-  if [ "${DEBUG:-}" ]; then
-    WB_VERSION='debug'
-  else
-    WB_VERSION='2022.5.1-beta'
-  fi
-  wbiso_file="${WB_PATH}/${WB_VERSION}_WB.iso"
+ # Creating ISO
+  wbiso_path="${WB_PATH}/${wbiso_name}.iso"
 
   # 0x14 is FAT16 Hidden FAT16 <32, this is the only format detected in windows10 automatically when using a persistent volume of 10 MB
   xorrisofs \
     -iso-level 1 \
-    -o "${wbiso_file}" \
-    -volid "USODY ${WB_VERSION}" \
+    -o "${wbiso_path}" \
+    -volid "${wbiso_name}" \
     -isohybrid-mbr /usr/lib/ISOLINUX/isohdpfx.bin \
     -eltorito-boot \
       isolinux/isolinux.bin \
@@ -368,7 +369,7 @@ EOF
     -append_partition 3 0x14 "${rw_img_path}" \
     "${WB_PATH}/staging"
 
-  printf "\n\n  Image generated in build/${wbiso_file}\n\n"
+  printf "\n\n  Image generated in build/${wbiso_name}\n\n"
 }
 
 main "${@}"
