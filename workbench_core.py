@@ -228,10 +228,10 @@ class WorkbenchCore:
         """Upload snapshot to server."""
         url = WorkbenchSettings.DH_URL
         token = WorkbenchSettings.DH_TOKEN
-        post_headers = {'Authorization': 'Basic ' + token, 'Content-type': 'application/json'}
 
         if url and token:
             print('[DH URL]', url, '\r')
+            post_headers = {'Authorization': 'Basic ' + token, 'Content-type': 'application/json'}
 
             try:
                 response = requests.post(url, headers=post_headers, data=json.dumps(snapshot))
