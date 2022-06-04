@@ -211,7 +211,7 @@ CHROOT
   mkdir -p ${WB_PATH}/staging/live
   mkdir -p ${WB_PATH}/tmp
 
-  if [ ! -f "${rw_img_path}" || "${DEBUG:-}" ]; then
+  if [ ! -f "${rw_img_path}" ] || [ "${DEBUG:-}" ]; then
     dd if=/dev/zero of="${rw_img_path}" bs=10M count=1
     mkfs.vfat "${rw_img_path}"
 
@@ -352,7 +352,7 @@ EOF
   xorrisofs \
     -iso-level 1 \
     -o "${wbiso_file}" \
-    -volid "WORKBENCH" \
+    -volid "USODY ${WB_VERSION}" \
     -isohybrid-mbr /usr/lib/ISOLINUX/isohdpfx.bin \
     -eltorito-boot \
       isolinux/isolinux.bin \
