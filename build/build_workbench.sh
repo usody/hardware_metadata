@@ -40,7 +40,7 @@ decide_if_update() {
     if [ -d /var/lib/apt/lists ]; then
       \${SUDO} touch /var/lib/apt/lists
     fi
-    apt_opts="-o Acquire::AllowReleaseInfoChange::Version=true"
+    apt_opts="-o Acquire::AllowReleaseInfoChange::Suite=true -o Acquire::AllowReleaseInfoChange::Version=true"
     # apt update could have problems such as key expirations, proceed anyway
     \${SUDO} apt-get "\${apt_opts}" update || true
   fi
