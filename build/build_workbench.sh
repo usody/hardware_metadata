@@ -277,7 +277,7 @@ apt install -y -t ${VERSION_CODENAME}-backports lshw  < /dev/null
 # Autologin root user
 # src https://wiki.archlinux.org/title/getty#Automatic_login_to_virtual_console
 mkdir -p /etc/systemd/system/getty@tty1.service.d/
-cat /etc/systemd/system/getty@tty1.service.d/override.conf <<END2
+cat > /etc/systemd/system/getty@tty1.service.d/override.conf <<END2
 [Service]
 ExecStart=
 ExecStart=-/sbin/agetty --autologin root --noclear %I \$TERM
