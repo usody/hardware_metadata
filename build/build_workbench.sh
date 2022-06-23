@@ -33,30 +33,74 @@ create_iso() {
   # Creating ISO
   wbiso_path="${WB_PATH}/${wbiso_name}.iso"
 
-  # 0x14 is FAT16 Hidden FAT16 <32, this is the only format detected in windows10 automatically when using a persistent volume of 10 MB
-  xorrisofs \
-    -iso-level 1 \
-    -o "${wbiso_path}" \
-    -volid "${wbiso_name}" \
-    -isohybrid-mbr /usr/lib/ISOLINUX/isohdpfx.bin \
-    -eltorito-boot \
-      isolinux/isolinux.bin \
-      -no-emul-boot \
-      -boot-load-size 4 \
-      -boot-info-table \
-      --eltorito-catalog isolinux/isolinux.cat \
-    -eltorito-alt-boot \
-      -e /EFI/boot/efiboot.img \
-      -no-emul-boot \
-      -isohybrid-gpt-basdat \
-    -append_partition 2 0xef ${WB_PATH}/staging/EFI/boot/efiboot.img \
-    -append_partition 3 0x14 "${rw_img_path}" \
-    "${WB_PATH}/staging"
+  case "${BOOT_TYPE}" in
+    isolinux)
+      # 0x14 is FAT16 Hidden FAT16 <32, this is the only format detected in windows10 automatically when using a persistent volume of 10 MB
+      xorrisofs \
+        -verbose \
+        -iso-level 3 \
+        -o "${wbiso_path}" \
+        -full-iso9660-filenames \
+        -volid "${wbiso_name}" \
+        -isohybrid-mbr /usr/lib/ISOLINUX/isohdpfx.bin \
+        -eltorito-boot \
+          isolinux/isolinux.bin \
+          -no-emul-boot \
+          -boot-load-size 4 \
+          -boot-info-table \
+          --eltorito-catalog isolinux/isolinux.cat \
+        -eltorito-alt-boot \
+          -e /EFI/boot/efiboot.img \
+          -no-emul-boot \
+          -isohybrid-gpt-basdat \
+        -append_partition 2 0xef ${WB_PATH}/staging/EFI/boot/efiboot.img \
+        -append_partition 3 0x14 "${rw_img_path}" \
+        "${WB_PATH}/staging"
+    ;;
+    grub)
+      # thanks https://github.com/ventoy/Ventoy/blob/master/LiveCD/livecd.sh#L80
+      # extra src https://willhaley.com/blog/custom-debian-live-environment/
+      xorriso \
+        -o "${wbiso_path}" \
+        -volid "${wbiso_name}" \
+        -as mkisofs \
+        -allow-lowercase \
+        --sort-weight 0 / \
+        --sort-weight 1 /EFI \
+        -verbose \
+        -rock \
+        -joliet \
+        -publisher 'VENTOY COMPATIBLE' \
+        -preparer 'https://www.ventoy.net' \
+        -sysid 'Ventoy' \
+        -appid 'VentoyLiveCD' \
+        --grub2-boot-info \
+        --grub2-mbr /usr/lib/ ../GRUB/boot_hybrid.img \
+#        --grub2-mbr ../GRUB/boot_hybrid.img \
+        -eltorito-boot \
+          EFI/boot/cdrom.img \
+          -no-emul-boot \
+          -boot-load-size 4 \
+          -boot-info-table \
+          -eltorito-catalog EFI/boot/boot.cat \
+        -eltorito-alt-boot \
+          -e EFI/boot/efi.img \
+          -no-emul-boot \
+        -append_partition 2 0xEF EFI/boot/efi.img \
+        -append_partition 3 0x14 "${rw_img_path}"
+    ;;
+    *)
+      echo 'ERROR: create_iso wants an argument: isolinux or grub'
+      exit 1
+      ;;
+  esac
 
   printf "\n\n  Image generated in build/${wbiso_path}\n\n"
 }
 
-create_boot_system() {
+isolinux_boot() {
+  # TODO check next comment
+  # we don't need to ensure grub is disabled because isolinux has preference
   isolinuxcfg_str="$(cat <<END
 UI vesamenu.c32
 
@@ -89,6 +133,20 @@ LABEL linux
   APPEND initrd=/live/initrd boot=live nomodeset
 END
 )"
+  #   TIMEOUT 60 means 6 seconds :)
+  cat > "${WB_PATH}/staging/isolinux/isolinux.cfg" <<EOF
+${isolinuxcfg_str}
+EOF
+  cp /usr/lib/ISOLINUX/isolinux.bin "${WB_PATH}/staging/isolinux/" && \
+  cp /usr/lib/syslinux/modules/bios/* "${WB_PATH}/staging/isolinux/"
+}
+
+grub_boot() {
+  # TODO check next removal
+  # ensure isolinux is disabled
+  #rm -f "${WB_PATH}/staging/isolinux/isolinux.cfg"
+  #rm -f "${WB_PATH}/staging/isolinux/isolinux.bin"
+
   grubcfg_str="$(cat<<END
 search --set=root --file /${wbiso_name}
 
@@ -108,28 +166,15 @@ menuentry "Debian Live [EFI/GRUB] (nomodeset)" {
 }
 END
 )"
-
-  # boot grub
-  #   TIMEOUT 60 means 6 seconds :)
-  cat <<EOF >${WB_PATH}/staging/isolinux/isolinux.cfg
-${isolinuxcfg_str}
-EOF
-
   cat <<EOF >${WB_PATH}/staging/boot/grub/grub.cfg
 ${grubcfg_str}
 EOF
 
   cat <<EOF >${WB_PATH}/tmp/grub-standalone.cfg
-search --set=root --file /WORKBENCH
+search --set=root --file /${wbiso_name}
 set prefix=(\$root)/boot/grub/
 configfile /boot/grub/grub.cfg
 EOF
-
-  ## Bootloaders
-
-  cp /usr/lib/ISOLINUX/isolinux.bin "${WB_PATH}/staging/isolinux/" && \
-  cp /usr/lib/syslinux/modules/bios/* "${WB_PATH}/staging/isolinux/"
-
   cp -r /usr/lib/grub/x86_64-efi/* "${WB_PATH}/staging/boot/grub/x86_64-efi/"
 
   grub-mkstandalone \
@@ -146,6 +191,22 @@ EOF
       mmd -i efiboot.img efi efi/boot && \
       mcopy -vi efiboot.img ../../../tmp/bootx64.efi ::efi/boot/
   )
+}
+
+create_boot_system() {
+  case "${BOOT_TYPE}" in
+    isolinux)
+      isolinux_boot
+      grub_boot
+    ;;
+    grub)
+      grub_boot
+    ;;
+    *)
+      echo 'ERROR: create_boot_system wants an argument: isolinux or grub'
+      exit 1
+      ;;
+  esac
 }
 
 compress_chroot_dir() {
@@ -340,16 +401,20 @@ prepare_chroot_env() {
 install_requirements() {
   # Install requirements
   eval "${decide_if_update_str}" && decide_if_update
+  # thanks https://willhaley.com/blog/custom-debian-live-environment/
   ${SUDO} apt-get install -y \
     debootstrap \
     squashfs-tools \
     xorriso \
+    isolinux \
+    syslinux-efi \
     grub-pc-bin \
     grub-efi-amd64-bin \
     mtools
 }
 
 create_base_dirs() {
+  # thanks https://willhaley.com/blog/custom-debian-live-environment/
   mkdir -p ${WB_PATH}
   mkdir -p ${WB_PATH}/staging/EFI/boot
   mkdir -p ${WB_PATH}/staging/boot/grub/x86_64-efi
@@ -408,6 +473,11 @@ main() {
   create_persistence_partition
 
   compress_chroot_dir
+
+  # do not change boot_type, explore from isolinux boot_type to make it work on uefi
+  # theoretically this approach is giving compatibility for all kinds of systems -> src https://willhaley.com/blog/custom-debian-live-environment/
+  #   grub, right now, is not interesting to explore
+  BOOT_TYPE='isolinux'
 
   create_boot_system
 
