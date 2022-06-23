@@ -31,4 +31,9 @@ run_tests:
 	python3 tests/test.py
 
 boot_iso:
-	qemu-system-x86_64 -enable-kvm -m 2G -vga qxl -netdev user,id=wan -device virtio-net,netdev=wan,id=nic1 -drive format=raw,file=build/wbiso/2022.5.1-beta_WB.iso,cache=none,if=virtio;
+	qemu-system-x86_64 -enable-kvm -m 2G -vga qxl -netdev user,id=wan -device virtio-net,netdev=wan,id=nic1 -drive format=raw,file=build/wbiso/USODY_debug.iso,cache=none,if=virtio;
+
+# src https://www.ubuntubuzz.com/2021/04/how-to-boot-uefi-on-qemu.html
+#   needs `sudo apt-get install ovmf`
+boot_iso_uefi:
+	qemu-system-x86_64 -bios /usr/share/ovmf/OVMF.fd -enable-kvm -m 2G -vga qxl -netdev user,id=wan -device virtio-net,netdev=wan,id=nic1 -drive format=raw,file=build/wbiso/USODY_debug.iso,cache=none,if=virtio;
