@@ -26,9 +26,9 @@ END
 
 create_iso() {
   # Copy kernel and initramfs
-  cp ${WB_PATH}/chroot/boot/vmlinuz-* \
+  ${SUDO} cp ${WB_PATH}/chroot/boot/vmlinuz-* \
     ${WB_PATH}/staging/live/vmlinuz && \
-  cp ${WB_PATH}/chroot/boot/initrd.img-* \
+  ${SUDO} cp ${WB_PATH}/chroot/boot/initrd.img-* \
     ${WB_PATH}/staging/live/initrd
   # Creating ISO
   wbiso_path="${WB_PATH}/${wbiso_name}.iso"
@@ -36,7 +36,7 @@ create_iso() {
   case "${BOOT_TYPE}" in
     isolinux)
       # 0x14 is FAT16 Hidden FAT16 <32, this is the only format detected in windows10 automatically when using a persistent volume of 10 MB
-      xorrisofs \
+      ${SUDO} xorrisofs \
         -verbose \
         -iso-level 3 \
         -o "${wbiso_path}" \
@@ -60,7 +60,7 @@ create_iso() {
     grub)
       # thanks https://github.com/ventoy/Ventoy/blob/master/LiveCD/livecd.sh#L80
       # extra src https://willhaley.com/blog/custom-debian-live-environment/
-      xorriso \
+      ${SUDO} xorriso \
         -o "${wbiso_path}" \
         -volid "${wbiso_name}" \
         -as mkisofs \
@@ -134,11 +134,11 @@ LABEL linux
 END
 )"
   #   TIMEOUT 60 means 6 seconds :)
-  cat > "${WB_PATH}/staging/isolinux/isolinux.cfg" <<EOF
+  sudo tee "${WB_PATH}/staging/isolinux/isolinux.cfg" <<EOF
 ${isolinuxcfg_str}
 EOF
-  cp /usr/lib/ISOLINUX/isolinux.bin "${WB_PATH}/staging/isolinux/" && \
-  cp /usr/lib/syslinux/modules/bios/* "${WB_PATH}/staging/isolinux/"
+  ${SUDO} cp /usr/lib/ISOLINUX/isolinux.bin "${WB_PATH}/staging/isolinux/" && \
+  ${SUDO} cp /usr/lib/syslinux/modules/bios/* "${WB_PATH}/staging/isolinux/"
 }
 
 grub_boot() {
@@ -147,7 +147,7 @@ grub_boot() {
   #rm -f "${WB_PATH}/staging/isolinux/isolinux.cfg"
   #rm -f "${WB_PATH}/staging/isolinux/isolinux.bin"
 
-  grubcfg_str="$(cat<<END
+  grubcfg_str="$(cat <<END
 search --set=root --file /${wbiso_name}
 
 set default="0"
@@ -166,18 +166,18 @@ menuentry "Debian Live [EFI/GRUB] (nomodeset)" {
 }
 END
 )"
-  cat <<EOF >${WB_PATH}/staging/boot/grub/grub.cfg
+  ${SUDO} tee "${WB_PATH}/staging/boot/grub/grub.cfg" <<EOF
 ${grubcfg_str}
 EOF
 
-  cat <<EOF >${WB_PATH}/tmp/grub-standalone.cfg
+  ${SUDO} tee "${WB_PATH}/tmp/grub-standalone.cfg" <<EOF
 search --set=root --file /${wbiso_name}
 set prefix=(\$root)/boot/grub/
 configfile /boot/grub/grub.cfg
 EOF
-  cp -r /usr/lib/grub/x86_64-efi/* "${WB_PATH}/staging/boot/grub/x86_64-efi/"
+  ${SUDO} cp -r /usr/lib/grub/x86_64-efi/* "${WB_PATH}/staging/boot/grub/x86_64-efi/"
 
-  grub-mkstandalone \
+  ${SUDO} grub-mkstandalone \
     --format=x86_64-efi \
     --output=${WB_PATH}/tmp/bootx64.efi \
     --locales="" \
@@ -186,10 +186,10 @@ EOF
 
   (
     cd ${WB_PATH}/staging/EFI/boot && \
-      dd if=/dev/zero of=efiboot.img bs=1M count=20 && \
-      mkfs.vfat efiboot.img && \
-      mmd -i efiboot.img efi efi/boot && \
-      mcopy -vi efiboot.img ../../../tmp/bootx64.efi ::efi/boot/
+      ${SUDO} dd if=/dev/zero of=efiboot.img bs=1M count=20 && \
+      ${SUDO} mkfs.vfat efiboot.img && \
+      ${SUDO} mmd -i efiboot.img efi efi/boot && \
+      ${SUDO} mcopy -vi efiboot.img ../../../tmp/bootx64.efi ::efi/boot/
   )
 }
 
@@ -230,8 +230,8 @@ create_persistence_partition() {
   rw_img_name="wbp_vfat.img"
   rw_img_path="${WB_PATH}/staging/${rw_img_name}"
   if [ ! -f "${rw_img_path}" ] || [ "${DEBUG:-}" ]; then
-    dd if=/dev/zero of="${rw_img_path}" bs=10M count=1
-    mkfs.vfat "${rw_img_path}"
+    ${SUDO} dd if=/dev/zero of="${rw_img_path}" bs=10M count=1
+    ${SUDO} mkfs.vfat "${rw_img_path}"
 
     # generate structure on persistent partition
     tmp_rw_mount="/tmp/${rw_img_name}"
@@ -245,7 +245,8 @@ create_persistence_partition() {
 
     uuid="$(blkid "${rw_img_path}" | awk '{ print $3; }')"
     # no fail on boot -> src https://askubuntu.com/questions/14365/mount-an-external-drive-at-boot-time-only-if-it-is-plugged-in/99628#99628
-    cat > "${WB_PATH}/chroot/etc/fstab" <<END
+    # use tee instead of cat -> src https://stackoverflow.com/questions/2953081/how-can-i-write-a-heredoc-to-a-file-in-bash-script/17093489#17093489
+    ${SUDO} tee "${WB_PATH}/chroot/etc/fstab" <<END
 # next three lines originally appeared on fstab, we preserve them
 # UNCONFIGURED FSTAB FOR BASE SYSTEM
 overlay / overlay rw 0 0
@@ -254,7 +255,7 @@ ${uuid} /mnt vfat defaults,nofail 0 0
 END
   fi
   # src https://manpages.debian.org/testing/open-infrastructure-system-boot/persistence.conf.5.en.html
-  echo "/ union" > "${WB_PATH}/chroot/persistence.conf"
+  echo "/ union" | ${SUDO} tee "${WB_PATH}/chroot/persistence.conf"
 }
 
 
@@ -394,8 +395,8 @@ prepare_chroot_env() {
 
   wb_dir="${WB_PATH}/chroot/opt/workbench"
   mkdir -p "${wb_dir}"
-  cp ../workbench_*.py "${wb_dir}"
-  cp files/.profile "${WB_PATH}/chroot/root/"
+  ${SUDO} cp ../workbench_*.py "${wb_dir}"
+  ${SUDO} cp files/.profile "${WB_PATH}/chroot/root/"
 }
 
 install_requirements() {
@@ -422,7 +423,7 @@ create_base_dirs() {
   mkdir -p ${WB_PATH}/staging/live
   mkdir -p ${WB_PATH}/tmp
   # usb name
-  touch ${WB_PATH}/staging/${wbiso_name}
+  ${SUDO} touch ${WB_PATH}/staging/${wbiso_name}
 }
 
 # this function is used both in shell and chroot
