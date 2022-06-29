@@ -183,12 +183,23 @@ EOF
     --fonts="" \
     "boot/grub/grub.cfg=${WB_PATH}/tmp/grub-standalone.cfg"
 
+  # prepare uefi secureboot files
+  #   bootx64 is the filename is looking to boot, and we force it to be the shimx64 file for uefi secureboot
+  #   shimx64 redirects to grubx64 -> src https://askubuntu.com/questions/874584/how-does-secure-boot-actually-work
+  #   grubx64 looks for a file in /EFI/debian/grub.cfg -> src src https://unix.stackexchange.com/questions/648089/uefi-grub-not-finding-config-file
+  ${SUDO} cp /usr/lib/shim/shimx64.efi.signed /tmp/bootx64.efi
+  ${SUDO} cp /usr/lib/grub/x86_64-efi-signed/grubx64.efi.signed /tmp/grubx64.efi
+  ${SUDO} cp ${WB_PATH}/tmp/grub-standalone.cfg ${WB_PATH}/staging/EFI/debian/grub.cfg
+
   (
-    cd ${WB_PATH}/staging/EFI/boot && \
-      ${SUDO} dd if=/dev/zero of=efiboot.img bs=1M count=20 && \
-      ${SUDO} mkfs.vfat efiboot.img && \
-      ${SUDO} mmd -i efiboot.img efi efi/boot && \
-      ${SUDO} mcopy -vi efiboot.img ../../../tmp/bootx64.efi ::efi/boot/
+    cd ${WB_PATH}/staging/EFI/boot
+      ${SUDO} dd if=/dev/zero of=efiboot.img bs=1M count=20
+      ${SUDO} mkfs.vfat efiboot.img
+      ${SUDO} mmd -i efiboot.img efi efi/boot
+      ${SUDO} mcopy -vi efiboot.img \
+        /tmp/bootx64.efi \
+        /tmp/grubx64.efi \
+          ::efi/boot/
   )
 }
 
@@ -407,10 +418,16 @@ install_requirements() {
                 squashfs-tools
                 xorriso
                 mtools'
+  # secureboot:
+  #   -> extra src https://wiki.debian.org/SecureBoot/
+  #   -> extra src https://wiki.debian.org/SecureBoot/VirtualMachine
+  #   -> extra src https://wiki.debian.org/GrubEFIReinstall
   bootloader_deps='isolinux
                      syslinux-efi
                      grub-pc-bin
-                     grub-efi-amd64-bin'
+                     grub-efi-amd64-bin
+                     ovmf
+                     grub-efi-amd64-signed'
   ${SUDO} apt-get install -y \
     ${image_deps} \
     ${bootloader_deps}
@@ -426,6 +443,9 @@ create_base_dirs() {
   mkdir -p ${WB_PATH}/tmp
   # usb name
   ${SUDO} touch ${WB_PATH}/staging/${wbiso_name}
+
+  # for uefi secure boot grub config file
+  mkdir -p ${WB_PATH}/staging/EFI/debian
 }
 
 # this function is used both in shell and chroot
