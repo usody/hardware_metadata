@@ -26,10 +26,8 @@ END
 
 create_iso() {
   # Copy kernel and initramfs
-  ${SUDO} cp ${WB_PATH}/chroot/boot/vmlinuz-* \
-    ${WB_PATH}/staging/live/vmlinuz && \
-  ${SUDO} cp ${WB_PATH}/chroot/boot/initrd.img-* \
-    ${WB_PATH}/staging/live/initrd
+  ${SUDO} cp ${WB_PATH}/chroot/boot/vmlinuz-* ${WB_PATH}/staging/live/vmlinuz
+  ${SUDO} cp ${WB_PATH}/chroot/boot/initrd.img-* ${WB_PATH}/staging/live/initrd
   # Creating ISO
   wbiso_path="${WB_PATH}/${wbiso_name}.iso"
 
@@ -118,6 +116,7 @@ MENU COLOR timeout      1;37;40 #c0ffffff #00000000 std
 MENU COLOR msg07        37;40   #90ffffff #a0000000 std
 MENU COLOR tabmsg       31;40   #30ffffff #00000000 std
 
+# TODO check next comment
 # THIS IS WHAT IS RUNNING NOW! (isolinux)
 # disabled predicted names -> src https://michlstechblog.info/blog/linux-disable-assignment-of-new-names-for-network-interfaces/
 LABEL linux
@@ -137,7 +136,7 @@ END
   sudo tee "${WB_PATH}/staging/isolinux/isolinux.cfg" <<EOF
 ${isolinuxcfg_str}
 EOF
-  ${SUDO} cp /usr/lib/ISOLINUX/isolinux.bin "${WB_PATH}/staging/isolinux/" && \
+  ${SUDO} cp /usr/lib/ISOLINUX/isolinux.bin "${WB_PATH}/staging/isolinux/"
   ${SUDO} cp /usr/lib/syslinux/modules/bios/* "${WB_PATH}/staging/isolinux/"
 }
 
@@ -373,6 +372,7 @@ printf 'workbench\nworkbench' | passwd root
 if [ -z "${DEBUG:-}" ]; then
   apt-get clean < /dev/null
 fi
+
 CHROOT
 }
 
@@ -399,23 +399,25 @@ prepare_chroot_env() {
   ${SUDO} cp files/.profile "${WB_PATH}/chroot/root/"
 }
 
+# thanks https://willhaley.com/blog/custom-debian-live-environment/
 install_requirements() {
   # Install requirements
   eval "${decide_if_update_str}" && decide_if_update
-  # thanks https://willhaley.com/blog/custom-debian-live-environment/
+  image_deps='debootstrap
+                squashfs-tools
+                xorriso
+                mtools'
+  bootloader_deps='isolinux
+                     syslinux-efi
+                     grub-pc-bin
+                     grub-efi-amd64-bin'
   ${SUDO} apt-get install -y \
-    debootstrap \
-    squashfs-tools \
-    xorriso \
-    isolinux \
-    syslinux-efi \
-    grub-pc-bin \
-    grub-efi-amd64-bin \
-    mtools
+    ${image_deps} \
+    ${bootloader_deps}
 }
 
+# thanks https://willhaley.com/blog/custom-debian-live-environment/
 create_base_dirs() {
-  # thanks https://willhaley.com/blog/custom-debian-live-environment/
   mkdir -p ${WB_PATH}
   mkdir -p ${WB_PATH}/staging/EFI/boot
   mkdir -p ${WB_PATH}/staging/boot/grub/x86_64-efi
