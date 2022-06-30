@@ -14,6 +14,13 @@ and this project adheres to [Calendar Versioning](https://calver.org/#scheme) sc
 
 ## [Unreleased]
 
+## [2022.5.2-beta] - 2022/05/30
+_(dmidecode = 3.3 | smartmontools = 7.2 | hwinfo = 21.72 | lshw = 02.19 | lspci = 3.7.0)_
+
+- [fixed] autologin root user
+- [added] WIP uefi compatibility
+- [changed] smartctl output is reduced
+
 ## [2022.5.1-beta] - 2022/05/24
 _(dmidecode = 3.3 | smartmontools = 7.2 | hwinfo = 21.72 | lshw = 02.19 | lspci = 3.7.0)_
 

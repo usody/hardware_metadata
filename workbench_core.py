@@ -160,7 +160,7 @@ class WorkbenchCore:
         if proc.returncode == 0:
             for disk in disk_info['blockdevices']:
                 if disk['type'] == 'disk':
-                    smart_cmd = ["smartctl -x --json=cosviu /dev/" + disk['kname']]
+                    smart_cmd = ["smartctl -x --json=csv /dev/" + disk['kname']]
                     proc_smart = subprocess.Popen(smart_cmd, shell=True, stdout=subprocess.PIPE,
                                                   stderr=subprocess.STDOUT)
                     smart_output, smart_errors = proc_smart.communicate()
