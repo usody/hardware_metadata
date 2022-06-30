@@ -26,37 +26,79 @@ END
 
 create_iso() {
   # Copy kernel and initramfs
-  cp ${WB_PATH}/chroot/boot/vmlinuz-* \
-    ${WB_PATH}/staging/live/vmlinuz && \
-  cp ${WB_PATH}/chroot/boot/initrd.img-* \
-    ${WB_PATH}/staging/live/initrd
+  ${SUDO} cp ${WB_PATH}/chroot/boot/vmlinuz-* ${WB_PATH}/staging/live/vmlinuz
+  ${SUDO} cp ${WB_PATH}/chroot/boot/initrd.img-* ${WB_PATH}/staging/live/initrd
   # Creating ISO
   wbiso_path="${WB_PATH}/${wbiso_name}.iso"
 
-  # 0x14 is FAT16 Hidden FAT16 <32, this is the only format detected in windows10 automatically when using a persistent volume of 10 MB
-  xorrisofs \
-    -iso-level 1 \
-    -o "${wbiso_path}" \
-    -volid "${wbiso_name}" \
-    -isohybrid-mbr /usr/lib/ISOLINUX/isohdpfx.bin \
-    -eltorito-boot \
-      isolinux/isolinux.bin \
-      -no-emul-boot \
-      -boot-load-size 4 \
-      -boot-info-table \
-      --eltorito-catalog isolinux/isolinux.cat \
-    -eltorito-alt-boot \
-      -e /EFI/boot/efiboot.img \
-      -no-emul-boot \
-      -isohybrid-gpt-basdat \
-    -append_partition 2 0xef ${WB_PATH}/staging/EFI/boot/efiboot.img \
-    -append_partition 3 0x14 "${rw_img_path}" \
-    "${WB_PATH}/staging"
+  case "${BOOT_TYPE}" in
+    isolinux)
+      # 0x14 is FAT16 Hidden FAT16 <32, this is the only format detected in windows10 automatically when using a persistent volume of 10 MB
+      ${SUDO} xorrisofs \
+        -verbose \
+        -iso-level 3 \
+        -o "${wbiso_path}" \
+        -full-iso9660-filenames \
+        -volid "${wbiso_name}" \
+        -isohybrid-mbr /usr/lib/ISOLINUX/isohdpfx.bin \
+        -eltorito-boot \
+          isolinux/isolinux.bin \
+          -no-emul-boot \
+          -boot-load-size 4 \
+          -boot-info-table \
+          --eltorito-catalog isolinux/isolinux.cat \
+        -eltorito-alt-boot \
+          -e /EFI/boot/efiboot.img \
+          -no-emul-boot \
+          -isohybrid-gpt-basdat \
+        -append_partition 2 0xef ${WB_PATH}/staging/EFI/boot/efiboot.img \
+        -append_partition 3 0x14 "${rw_img_path}" \
+        "${WB_PATH}/staging"
+    ;;
+    grub)
+      # thanks https://github.com/ventoy/Ventoy/blob/master/LiveCD/livecd.sh#L80
+      # extra src https://willhaley.com/blog/custom-debian-live-environment/
+      ${SUDO} xorriso \
+        -o "${wbiso_path}" \
+        -volid "${wbiso_name}" \
+        -as mkisofs \
+        -allow-lowercase \
+        --sort-weight 0 / \
+        --sort-weight 1 /EFI \
+        -verbose \
+        -rock \
+        -joliet \
+        -publisher 'VENTOY COMPATIBLE' \
+        -preparer 'https://www.ventoy.net' \
+        -sysid 'Ventoy' \
+        -appid 'VentoyLiveCD' \
+        --grub2-boot-info \
+        --grub2-mbr /usr/lib/ ../GRUB/boot_hybrid.img \
+#        --grub2-mbr ../GRUB/boot_hybrid.img \
+        -eltorito-boot \
+          EFI/boot/cdrom.img \
+          -no-emul-boot \
+          -boot-load-size 4 \
+          -boot-info-table \
+          -eltorito-catalog EFI/boot/boot.cat \
+        -eltorito-alt-boot \
+          -e EFI/boot/efi.img \
+          -no-emul-boot \
+        -append_partition 2 0xEF EFI/boot/efi.img \
+        -append_partition 3 0x14 "${rw_img_path}"
+    ;;
+    *)
+      echo 'ERROR: create_iso wants an argument: isolinux or grub'
+      exit 1
+      ;;
+  esac
 
   printf "\n\n  Image generated in build/${wbiso_path}\n\n"
 }
 
-create_boot_system() {
+isolinux_boot() {
+  # TODO check next comment
+  # we don't need to ensure grub is disabled because isolinux has preference
   isolinuxcfg_str="$(cat <<END
 UI vesamenu.c32
 
@@ -74,6 +116,7 @@ MENU COLOR timeout      1;37;40 #c0ffffff #00000000 std
 MENU COLOR msg07        37;40   #90ffffff #a0000000 std
 MENU COLOR tabmsg       31;40   #30ffffff #00000000 std
 
+# TODO check next comment
 # THIS IS WHAT IS RUNNING NOW! (isolinux)
 # disabled predicted names -> src https://michlstechblog.info/blog/linux-disable-assignment-of-new-names-for-network-interfaces/
 LABEL linux
@@ -89,7 +132,21 @@ LABEL linux
   APPEND initrd=/live/initrd boot=live nomodeset
 END
 )"
-  grubcfg_str="$(cat<<END
+  #   TIMEOUT 60 means 6 seconds :)
+  sudo tee "${WB_PATH}/staging/isolinux/isolinux.cfg" <<EOF
+${isolinuxcfg_str}
+EOF
+  ${SUDO} cp /usr/lib/ISOLINUX/isolinux.bin "${WB_PATH}/staging/isolinux/"
+  ${SUDO} cp /usr/lib/syslinux/modules/bios/* "${WB_PATH}/staging/isolinux/"
+}
+
+grub_boot() {
+  # TODO check next removal
+  # ensure isolinux is disabled
+  #rm -f "${WB_PATH}/staging/isolinux/isolinux.cfg"
+  #rm -f "${WB_PATH}/staging/isolinux/isolinux.bin"
+
+  grubcfg_str="$(cat <<END
 search --set=root --file /${wbiso_name}
 
 set default="0"
@@ -108,44 +165,58 @@ menuentry "Debian Live [EFI/GRUB] (nomodeset)" {
 }
 END
 )"
-
-  # boot grub
-  #   TIMEOUT 60 means 6 seconds :)
-  cat <<EOF >${WB_PATH}/staging/isolinux/isolinux.cfg
-${isolinuxcfg_str}
-EOF
-
-  cat <<EOF >${WB_PATH}/staging/boot/grub/grub.cfg
+  ${SUDO} tee "${WB_PATH}/staging/boot/grub/grub.cfg" <<EOF
 ${grubcfg_str}
 EOF
 
-  cat <<EOF >${WB_PATH}/tmp/grub-standalone.cfg
-search --set=root --file /WORKBENCH
+  ${SUDO} tee "${WB_PATH}/tmp/grub-standalone.cfg" <<EOF
+search --set=root --file /${wbiso_name}
 set prefix=(\$root)/boot/grub/
 configfile /boot/grub/grub.cfg
 EOF
+  ${SUDO} cp -r /usr/lib/grub/x86_64-efi/* "${WB_PATH}/staging/boot/grub/x86_64-efi/"
 
-  ## Bootloaders
-
-  cp /usr/lib/ISOLINUX/isolinux.bin "${WB_PATH}/staging/isolinux/" && \
-  cp /usr/lib/syslinux/modules/bios/* "${WB_PATH}/staging/isolinux/"
-
-  cp -r /usr/lib/grub/x86_64-efi/* "${WB_PATH}/staging/boot/grub/x86_64-efi/"
-
-  grub-mkstandalone \
+  ${SUDO} grub-mkstandalone \
     --format=x86_64-efi \
     --output=${WB_PATH}/tmp/bootx64.efi \
     --locales="" \
     --fonts="" \
     "boot/grub/grub.cfg=${WB_PATH}/tmp/grub-standalone.cfg"
 
+  # prepare uefi secureboot files
+  #   bootx64 is the filename is looking to boot, and we force it to be the shimx64 file for uefi secureboot
+  #   shimx64 redirects to grubx64 -> src https://askubuntu.com/questions/874584/how-does-secure-boot-actually-work
+  #   grubx64 looks for a file in /EFI/debian/grub.cfg -> src src https://unix.stackexchange.com/questions/648089/uefi-grub-not-finding-config-file
+  ${SUDO} cp /usr/lib/shim/shimx64.efi.signed /tmp/bootx64.efi
+  ${SUDO} cp /usr/lib/grub/x86_64-efi-signed/grubx64.efi.signed /tmp/grubx64.efi
+  ${SUDO} cp ${WB_PATH}/tmp/grub-standalone.cfg ${WB_PATH}/staging/EFI/debian/grub.cfg
+
   (
-    cd ${WB_PATH}/staging/EFI/boot && \
-      dd if=/dev/zero of=efiboot.img bs=1M count=20 && \
-      mkfs.vfat efiboot.img && \
-      mmd -i efiboot.img efi efi/boot && \
-      mcopy -vi efiboot.img ../../../tmp/bootx64.efi ::efi/boot/
+    cd ${WB_PATH}/staging/EFI/boot
+      ${SUDO} dd if=/dev/zero of=efiboot.img bs=1M count=20
+      ${SUDO} mkfs.vfat efiboot.img
+      ${SUDO} mmd -i efiboot.img efi efi/boot
+      ${SUDO} mcopy -vi efiboot.img \
+        /tmp/bootx64.efi \
+        /tmp/grubx64.efi \
+          ::efi/boot/
   )
+}
+
+create_boot_system() {
+  case "${BOOT_TYPE}" in
+    isolinux)
+      isolinux_boot
+      grub_boot
+    ;;
+    grub)
+      grub_boot
+    ;;
+    *)
+      echo 'ERROR: create_boot_system wants an argument: isolinux or grub'
+      exit 1
+      ;;
+  esac
 }
 
 compress_chroot_dir() {
@@ -169,8 +240,8 @@ create_persistence_partition() {
   rw_img_name="wbp_vfat.img"
   rw_img_path="${WB_PATH}/staging/${rw_img_name}"
   if [ ! -f "${rw_img_path}" ] || [ "${DEBUG:-}" ]; then
-    dd if=/dev/zero of="${rw_img_path}" bs=10M count=1
-    mkfs.vfat "${rw_img_path}"
+    ${SUDO} dd if=/dev/zero of="${rw_img_path}" bs=10M count=1
+    ${SUDO} mkfs.vfat "${rw_img_path}"
 
     # generate structure on persistent partition
     tmp_rw_mount="/tmp/${rw_img_name}"
@@ -184,7 +255,8 @@ create_persistence_partition() {
 
     uuid="$(blkid "${rw_img_path}" | awk '{ print $3; }')"
     # no fail on boot -> src https://askubuntu.com/questions/14365/mount-an-external-drive-at-boot-time-only-if-it-is-plugged-in/99628#99628
-    cat > "${WB_PATH}/chroot/etc/fstab" <<END
+    # use tee instead of cat -> src https://stackoverflow.com/questions/2953081/how-can-i-write-a-heredoc-to-a-file-in-bash-script/17093489#17093489
+    ${SUDO} tee "${WB_PATH}/chroot/etc/fstab" <<END
 # next three lines originally appeared on fstab, we preserve them
 # UNCONFIGURED FSTAB FOR BASE SYSTEM
 overlay / overlay rw 0 0
@@ -193,7 +265,7 @@ ${uuid} /mnt vfat defaults,nofail 0 0
 END
   fi
   # src https://manpages.debian.org/testing/open-infrastructure-system-boot/persistence.conf.5.en.html
-  echo "/ union" > "${WB_PATH}/chroot/persistence.conf"
+  echo "/ union" | ${SUDO} tee "${WB_PATH}/chroot/persistence.conf"
 }
 
 
@@ -311,6 +383,7 @@ printf 'workbench\nworkbench' | passwd root
 if [ -z "${DEBUG:-}" ]; then
   apt-get clean < /dev/null
 fi
+
 CHROOT
 }
 
@@ -333,22 +406,34 @@ prepare_chroot_env() {
 
   wb_dir="${WB_PATH}/chroot/opt/workbench"
   mkdir -p "${wb_dir}"
-  cp ../workbench_*.py "${wb_dir}"
-  cp files/.profile "${WB_PATH}/chroot/root/"
+  ${SUDO} cp ../workbench_*.py "${wb_dir}"
+  ${SUDO} cp files/.profile "${WB_PATH}/chroot/root/"
 }
 
+# thanks https://willhaley.com/blog/custom-debian-live-environment/
 install_requirements() {
   # Install requirements
   eval "${decide_if_update_str}" && decide_if_update
+  image_deps='debootstrap
+                squashfs-tools
+                xorriso
+                mtools'
+  # secureboot:
+  #   -> extra src https://wiki.debian.org/SecureBoot/
+  #   -> extra src https://wiki.debian.org/SecureBoot/VirtualMachine
+  #   -> extra src https://wiki.debian.org/GrubEFIReinstall
+  bootloader_deps='isolinux
+                     syslinux-efi
+                     grub-pc-bin
+                     grub-efi-amd64-bin
+                     ovmf
+                     grub-efi-amd64-signed'
   ${SUDO} apt-get install -y \
-    debootstrap \
-    squashfs-tools \
-    xorriso \
-    grub-pc-bin \
-    grub-efi-amd64-bin \
-    mtools
+    ${image_deps} \
+    ${bootloader_deps}
 }
 
+# thanks https://willhaley.com/blog/custom-debian-live-environment/
 create_base_dirs() {
   mkdir -p ${WB_PATH}
   mkdir -p ${WB_PATH}/staging/EFI/boot
@@ -357,7 +442,10 @@ create_base_dirs() {
   mkdir -p ${WB_PATH}/staging/live
   mkdir -p ${WB_PATH}/tmp
   # usb name
-  touch ${WB_PATH}/staging/${wbiso_name}
+  ${SUDO} touch ${WB_PATH}/staging/${wbiso_name}
+
+  # for uefi secure boot grub config file
+  mkdir -p ${WB_PATH}/staging/EFI/debian
 }
 
 # this function is used both in shell and chroot
@@ -408,6 +496,11 @@ main() {
   create_persistence_partition
 
   compress_chroot_dir
+
+  # do not change boot_type, explore from isolinux boot_type to make it work on uefi
+  # theoretically this approach is giving compatibility for all kinds of systems -> src https://willhaley.com/blog/custom-debian-live-environment/
+  #   grub, right now, is not interesting to explore
+  BOOT_TYPE='isolinux'
 
   create_boot_system
 
