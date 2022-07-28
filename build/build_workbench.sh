@@ -242,6 +242,31 @@ END2
 END
 )"
 
+prepare_app() {
+  # prepare app during prepare_chroot_env
+  wb_dir="${WB_PATH}/chroot/opt/workbench"
+  mkdir -p "${wb_dir}"
+  ${SUDO} cp ../workbench_*.py "${wb_dir}"
+  ${SUDO} cp files/.profile "${WB_PATH}/chroot/root/"
+
+  # sequence of commands to install app in function run_chroot
+  install_app_str="$(cat<<END
+echo 'Install Workbench requirements'
+
+# Install WB debian requirements
+apt-get install -y --no-install-recommends \
+  python3 python3-dev python3-pip \
+  dmidecode smartmontools hwinfo pciutils < /dev/null
+
+# Install WB python requirements
+pip3 install python-dateutil==2.8.2 hashids==1.3.1 requests~=2.21.0 python-decouple==3.3
+
+# Install lshw B02.19 utility using backports
+apt install -y -t ${VERSION_CODENAME}-backports lshw  < /dev/null
+END
+)"
+}
+
 run_chroot() {
   # non interactive chroot -> src https://stackoverflow.com/questions/51305706/shell-script-that-does-chroot-and-execute-commands-in-chroot
   # stop apt-get from greedily reading the stdin -> src https://askubuntu.com/questions/638686/apt-get-exits-bash-script-after-installing-packages/638754#638754
@@ -313,30 +338,6 @@ if [ -z "${DEBUG:-}" ]; then
 fi
 
 CHROOT
-}
-
-prepare_app() {
-  # prepare app during prepare_chroot_env
-  wb_dir="${WB_PATH}/chroot/opt/workbench"
-  mkdir -p "${wb_dir}"
-  ${SUDO} cp ../workbench_*.py "${wb_dir}"
-  ${SUDO} cp files/.profile "${WB_PATH}/chroot/root/"
-
-  # sequence of commands to install app in function run_chroot
-  install_app_str="$(cat<<END
-echo 'Install Workbench requirements'
-
-# Install WB debian requirements
-apt-get install -y --no-install-recommends \
-  python3 python3-dev python3-pip \
-  dmidecode smartmontools hwinfo pciutils < /dev/null
-
-# Install WB python requirements
-pip3 install python-dateutil==2.8.2 hashids==1.3.1 requests~=2.21.0 python-decouple==3.3
-
-# Install lshw B02.19 utility using backports
-apt install -y -t ${VERSION_CODENAME}-backports lshw  < /dev/null
-END
 }
 
 prepare_chroot_env() {
