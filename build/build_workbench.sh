@@ -1,7 +1,11 @@
-#!/bin/sh -eu
+#!/bin/sh
 
+# debug
 set -x
+# exit on failure
 set -e
+# fail and exit when it cannot substitute a variable
+set -u
 
 # inspired from Ander in https://code.ungleich.ch/ungleich-public/cdist/issues/4
 # this is a way to reuse a function used inside and outside of chroot
