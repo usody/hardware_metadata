@@ -297,7 +297,7 @@ END2
 
 systemctl enable getty@tty1.service
 
-### END workbench-live installation
+### END workbench_lite installation
 
 
 # other debian utilities
@@ -316,8 +316,7 @@ ${chroot_netdns_conf_str}
 #   this is the root password
 #   Method3: Use echo
 #     src https://www.systutorials.com/changing-linux-users-password-in-one-command-line/
-#     TODO hardcoded password
-printf 'workbench\nworkbench' | passwd root
+printf '${root_passwd}\n${root_passwd}' | passwd root
 
 # general cleanup if production image
 if [ -z "${DEBUG:-}" ]; then
@@ -340,7 +339,6 @@ prepare_chroot_env() {
   chroot_path="${WB_PATH}/chroot"
   if [ ! -d "${chroot_path}" ]; then
     ${SUDO} debootstrap --arch=amd64 --variant=minbase ${VERSION_CODENAME} ${WB_PATH}/chroot http://deb.debian.org/debian/
-    # TODO does this make sense?
     ${SUDO} chown -R "${USER}:" ${WB_PATH}/chroot
   fi
 
@@ -399,7 +397,6 @@ detect_user() {
   # detect user with sudo or already on sudo src https://serverfault.com/questions/568627/can-a-program-tell-it-is-being-run-under-sudo/568628#568628
   elif [ ! "\${userid}" = 0 ] || [ -n "\${SUDO_USER}" ]; then
     SUDO='sudo'
-    # TODO check
     # jump to current dir where the script is so relative links work
     cd "\$(dirname "\${0}")"
     # workbench working directory to build the iso
@@ -422,6 +419,7 @@ main() {
   fi
   wbiso_name="USODY_${WB_VERSION}"
   hostname='workbench-live'
+  root_passwd='workbench'
 
   eval "${detect_user_str}" && detect_user
 
