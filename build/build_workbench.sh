@@ -271,20 +271,8 @@ apt-get install -y --no-install-recommends \
   live-boot \
   systemd-sysv
 
-### START workbench_lite installation
-
-echo 'Install Workbench'
-
-# Install WB debian requirements
-apt-get install -y --no-install-recommends \
-  python3 python3-dev python3-pip \
-  dmidecode smartmontools hwinfo pciutils < /dev/null
-
-# Install WB python requirements
-pip3 install python-dateutil==2.8.2 hashids==1.3.1 requests~=2.21.0 python-decouple==3.3
-
-# Install lshw B02.19 utility using backports
-apt install -y -t ${VERSION_CODENAME}-backports lshw  < /dev/null
+# Install app
+${install_app_str}
 
 # Autologin root user
 # src https://wiki.archlinux.org/title/getty#Automatic_login_to_virtual_console
@@ -296,9 +284,6 @@ ExecStart=-/sbin/agetty --autologin root --noclear %I \$TERM
 END2
 
 systemctl enable getty@tty1.service
-
-### END workbench_lite installation
-
 
 # other debian utilities
 apt-get install -y --no-install-recommends \
@@ -326,6 +311,30 @@ fi
 CHROOT
 }
 
+prepare_app() {
+  # prepare app during prepare_chroot_env
+  wb_dir="${WB_PATH}/chroot/opt/workbench"
+  mkdir -p "${wb_dir}"
+  ${SUDO} cp ../workbench_*.py "${wb_dir}"
+  ${SUDO} cp files/.profile "${WB_PATH}/chroot/root/"
+
+  # sequence of commands to install app in function run_chroot
+  install_app_str="$(cat<<END
+echo 'Install Workbench requirements'
+
+# Install WB debian requirements
+apt-get install -y --no-install-recommends \
+  python3 python3-dev python3-pip \
+  dmidecode smartmontools hwinfo pciutils < /dev/null
+
+# Install WB python requirements
+pip3 install python-dateutil==2.8.2 hashids==1.3.1 requests~=2.21.0 python-decouple==3.3
+
+# Install lshw B02.19 utility using backports
+apt install -y -t ${VERSION_CODENAME}-backports lshw  < /dev/null
+END
+}
+
 prepare_chroot_env() {
   # version of debian the bootstrap is going to build
   #   if no VERSION_CODENAME is specified we assume that the bootstrap is going to
@@ -342,10 +351,7 @@ prepare_chroot_env() {
     ${SUDO} chown -R "${USER}:" ${WB_PATH}/chroot
   fi
 
-  wb_dir="${WB_PATH}/chroot/opt/workbench"
-  mkdir -p "${wb_dir}"
-  ${SUDO} cp ../workbench_*.py "${wb_dir}"
-  ${SUDO} cp files/.profile "${WB_PATH}/chroot/root/"
+  prepare_app
 }
 
 # thanks https://willhaley.com/blog/custom-debian-live-environment/
