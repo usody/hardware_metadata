@@ -31,74 +31,32 @@ create_iso() {
   # Creating ISO
   wbiso_path="${WB_PATH}/${wbiso_name}.iso"
 
-  case "${BOOT_TYPE}" in
-    isolinux)
-      # 0x14 is FAT16 Hidden FAT16 <32, this is the only format detected in windows10 automatically when using a persistent volume of 10 MB
-      ${SUDO} xorrisofs \
-        -verbose \
-        -iso-level 3 \
-        -o "${wbiso_path}" \
-        -full-iso9660-filenames \
-        -volid "${wbiso_name}" \
-        -isohybrid-mbr /usr/lib/ISOLINUX/isohdpfx.bin \
-        -eltorito-boot \
-          isolinux/isolinux.bin \
-          -no-emul-boot \
-          -boot-load-size 4 \
-          -boot-info-table \
-          --eltorito-catalog isolinux/isolinux.cat \
-        -eltorito-alt-boot \
-          -e /EFI/boot/efiboot.img \
-          -no-emul-boot \
-          -isohybrid-gpt-basdat \
-        -append_partition 2 0xef ${WB_PATH}/staging/EFI/boot/efiboot.img \
-        -append_partition 3 0x14 "${rw_img_path}" \
-        "${WB_PATH}/staging"
-    ;;
-    grub)
-      # thanks https://github.com/ventoy/Ventoy/blob/master/LiveCD/livecd.sh#L80
-      # extra src https://willhaley.com/blog/custom-debian-live-environment/
-      ${SUDO} xorriso \
-        -o "${wbiso_path}" \
-        -volid "${wbiso_name}" \
-        -as mkisofs \
-        -allow-lowercase \
-        --sort-weight 0 / \
-        --sort-weight 1 /EFI \
-        -verbose \
-        -rock \
-        -joliet \
-        -publisher 'VENTOY COMPATIBLE' \
-        -preparer 'https://www.ventoy.net' \
-        -sysid 'Ventoy' \
-        -appid 'VentoyLiveCD' \
-        --grub2-boot-info \
-        --grub2-mbr /usr/lib/ ../GRUB/boot_hybrid.img \
-#        --grub2-mbr ../GRUB/boot_hybrid.img \
-        -eltorito-boot \
-          EFI/boot/cdrom.img \
-          -no-emul-boot \
-          -boot-load-size 4 \
-          -boot-info-table \
-          -eltorito-catalog EFI/boot/boot.cat \
-        -eltorito-alt-boot \
-          -e EFI/boot/efi.img \
-          -no-emul-boot \
-        -append_partition 2 0xEF EFI/boot/efi.img \
-        -append_partition 3 0x14 "${rw_img_path}"
-    ;;
-    *)
-      echo 'ERROR: create_iso wants an argument: isolinux or grub'
-      exit 1
-      ;;
-  esac
+  # 0x14 is FAT16 Hidden FAT16 <32, this is the only format detected in windows10 automatically when using a persistent volume of 10 MB
+  ${SUDO} xorrisofs \
+    -verbose \
+    -iso-level 3 \
+    -o "${wbiso_path}" \
+    -full-iso9660-filenames \
+    -volid "${wbiso_name}" \
+    -isohybrid-mbr /usr/lib/ISOLINUX/isohdpfx.bin \
+    -eltorito-boot \
+      isolinux/isolinux.bin \
+      -no-emul-boot \
+      -boot-load-size 4 \
+      -boot-info-table \
+      --eltorito-catalog isolinux/isolinux.cat \
+    -eltorito-alt-boot \
+      -e /EFI/boot/efiboot.img \
+      -no-emul-boot \
+      -isohybrid-gpt-basdat \
+    -append_partition 2 0xef ${WB_PATH}/staging/EFI/boot/efiboot.img \
+    -append_partition 3 0x14 "${rw_img_path}" \
+    "${WB_PATH}/staging"
 
   printf "\n\n  Image generated in build/${wbiso_path}\n\n"
 }
 
 isolinux_boot() {
-  # TODO check next comment
-  # we don't need to ensure grub is disabled because isolinux has preference
   isolinuxcfg_str="$(cat <<END
 UI vesamenu.c32
 
@@ -116,9 +74,6 @@ MENU COLOR timeout      1;37;40 #c0ffffff #00000000 std
 MENU COLOR msg07        37;40   #90ffffff #a0000000 std
 MENU COLOR tabmsg       31;40   #30ffffff #00000000 std
 
-# TODO check next comment
-# THIS IS WHAT IS RUNNING NOW! (isolinux)
-# disabled predicted names -> src https://michlstechblog.info/blog/linux-disable-assignment-of-new-names-for-network-interfaces/
 LABEL linux
   MENU LABEL Debian Live [BIOS/ISOLINUX]
   MENU DEFAULT
@@ -129,7 +84,7 @@ LABEL linux
   MENU LABEL Debian Live [BIOS/ISOLINUX] (nomodeset)
   MENU DEFAULT
   KERNEL /live/vmlinuz
-  APPEND initrd=/live/initrd boot=live nomodeset
+  APPEND initrd=/live/initrd boot=live net.ifnames=0 biosdevname=0 persistence nomodeset
 END
 )"
   #   TIMEOUT 60 means 6 seconds :)
@@ -141,11 +96,6 @@ EOF
 }
 
 grub_boot() {
-  # TODO check next removal
-  # ensure isolinux is disabled
-  #rm -f "${WB_PATH}/staging/isolinux/isolinux.cfg"
-  #rm -f "${WB_PATH}/staging/isolinux/isolinux.bin"
-
   grubcfg_str="$(cat <<END
 search --set=root --file /${wbiso_name}
 
@@ -155,12 +105,12 @@ set timeout=1
 # If X has issues finding screens, experiment with/without nomodeset.
 
 menuentry "Debian Live [EFI/GRUB]" {
-    linux (\$root)/live/vmlinuz boot=live
+    linux (\$root)/live/vmlinuz boot=live net.ifnames=0 biosdevname=0 persistence
     initrd (\$root)/live/initrd
 }
 
 menuentry "Debian Live [EFI/GRUB] (nomodeset)" {
-    linux (\$root)/live/vmlinuz boot=live nomodeset
+    linux (\$root)/live/vmlinuz boot=live net.ifnames=0 biosdevname=0 persistence nomodeset
     initrd (\$root)/live/initrd
 }
 END
@@ -204,19 +154,9 @@ EOF
 }
 
 create_boot_system() {
-  case "${BOOT_TYPE}" in
-    isolinux)
-      isolinux_boot
-      grub_boot
-    ;;
-    grub)
-      grub_boot
-    ;;
-    *)
-      echo 'ERROR: create_boot_system wants an argument: isolinux or grub'
-      exit 1
-      ;;
-  esac
+  # both boots disable predicted names -> src https://michlstechblog.info/blog/linux-disable-assignment-of-new-names-for-network-interfaces/
+  isolinux_boot
+  grub_boot
 }
 
 compress_chroot_dir() {
@@ -496,11 +436,6 @@ main() {
   create_persistence_partition
 
   compress_chroot_dir
-
-  # do not change boot_type, explore from isolinux boot_type to make it work on uefi
-  # theoretically this approach is giving compatibility for all kinds of systems -> src https://willhaley.com/blog/custom-debian-live-environment/
-  #   grub, right now, is not interesting to explore
-  BOOT_TYPE='isolinux'
 
   create_boot_system
 
