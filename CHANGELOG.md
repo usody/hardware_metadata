@@ -8,11 +8,18 @@ and this project adheres to [Calendar Versioning](https://calver.org/#scheme) sc
 [2022.5.1-beta]
 
 ## preprod
-[2022.5.1-beta]
+[2022.8.0-beta]
 
 ----
-
 ## [Unreleased]
+
+## [2022.8.0-beta] - 2022/08/03
+_(dmidecode = 3.3 | smartmontools = 7.2 | hwinfo = 21.72 | lshw = 02.19 | lspci = 3.7.0)_
+
+- [added] both boot compatibility (legacy & uefi)
+- [changed] refactor build script (start app abstraction)
+- [removed] TODO comments on build script
+- [removed] BOOT_TYPE selection
 
 ## [2022.5.2-beta] - 2022/05/30
 _(dmidecode = 3.3 | smartmontools = 7.2 | hwinfo = 21.72 | lshw = 02.19 | lspci = 3.7.0)_
