@@ -22,7 +22,7 @@ class WorkbenchCore:
         self.type = 'Snapshot'
         self.snapshot_uuid = uuid.uuid4()
         self.software = 'Workbench'
-        self.version = '2022.5.2-beta'
+        self.version = '2022.8.0-beta'
         self.schema_api = '1.0.0'
         # Generate WB ID base on snapshot uuid value
         self.sid = self.generate_sid(self.snapshot_uuid)
