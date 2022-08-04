@@ -238,7 +238,7 @@ class WorkbenchCore:
                 r = response.json()
                 if response.status_code == 201:
                     print('[INFO] Snapshot JSON successfully uploaded.')
-                    print('[DEVICE ID]', r['url'])
+                    print('[DEVICE ID]', r['dhid'])
                 elif response.status_code == 400:
                     print('[ERROR] We could not auto-upload the device.', response.status_code, '-', response.reason)
                     print('Response error:', r)
