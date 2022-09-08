@@ -87,7 +87,7 @@ Run tests
 
 .. code-block::
 
-    sudo make run_tests
+    sudo make test
 
 Code Ownership
 *****************

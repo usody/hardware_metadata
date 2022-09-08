@@ -27,8 +27,8 @@ install_WB_dependencies:
 run_WB:
 	python3 workbench_core.py
 
-run_tests:
-	python3 tests/test.py
+test:
+	DISABLE_HWINFO=1 python3 -m unittest tests/test.py
 
 boot_iso:
 	sudo qemu-system-x86_64 \

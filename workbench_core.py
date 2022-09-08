@@ -192,7 +192,11 @@ class WorkbenchCore:
         snapshot_data.update({'lshw': self.get_lshw_data()})
         snapshot_data.update({'dmidecode': self.get_dmi_data()})
         snapshot_data.update({'lspci': self.get_lspci_data()})
-        snapshot_data.update({'hwinfo': self.get_hwinfo_data()})
+        # 2022-9-8: hwinfo is slow, it is in the stage of deprecation and it is not tested
+        #   hence, don't run hwinfo on test situation
+        #   info: disabling it reduces the process time from 17 to 2 seconds
+        if(not os.environ.get("DISABLE_HWINFO")):
+          snapshot_data.update({'hwinfo': self.get_hwinfo_data()})
         snapshot_data.update({'smart': self.get_smart_data()})
 
         # Generate snapshot
