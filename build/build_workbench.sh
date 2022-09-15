@@ -206,6 +206,8 @@ create_persistence_partition() {
 overlay / overlay rw 0 0
 tmpfs /tmp tmpfs nosuid,nodev 0 0
 ${uuid} /mnt vfat defaults,nofail 0 0
+# TODO env var
+10.0.4.4:/home/user/wb/ /home/user/wb/ nfs tcp,nolock 0 0
 END
   fi
   # src https://manpages.debian.org/testing/open-infrastructure-system-boot/persistence.conf.5.en.html
@@ -223,6 +225,10 @@ iface lo inet loopback
 
 auto eth0
 iface eth0 inet dhcp
+
+# TODO env var
+auto eth1
+iface eth1 inet dhcp
 END2
 
 ###################
@@ -324,6 +330,9 @@ apt-get install -y --no-install-recommends \
   jq \
   nano vim-tiny \
   < /dev/null
+
+# TODO env var
+apt-get install -y nfs-common
 
 ${chroot_netdns_conf_str}
 
