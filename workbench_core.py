@@ -22,17 +22,14 @@ class WorkbenchCore:
         self.type = 'Snapshot'
         self.snapshot_uuid = uuid.uuid4()
         self.software = 'Workbench'
-        self.version = '2022.8.0-beta'
+        self.version = '2022.10.0-beta'
         self.schema_api = '1.0.0'
-        # Generate WB ID base on snapshot uuid value
-        self.sid = self.generate_sid(self.snapshot_uuid)
+        # Generate SID as an alternative id to the DHID when no internet 
+        self.sid = self.generate_sid()
         self.snapshots_path = WorkbenchSettings.WB_SNAPSHOT_PATH
 
-    def generate_sid(self, uuid):
-        from hashids import Hashids
-        ALPHABET = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ1234567890'
-        # TODO short hash result to 6 characters
-        return Hashids('', min_length=5, alphabet=ALPHABET).encode(uuid.time_mid)
+    def generate_sid(self):
+            return str(self.snapshot_uuid.time_mid).rjust(5, '0')
 
     def get_lshw_data(self):
         """Get hw data using lshw command and return dict."""
