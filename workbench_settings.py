@@ -10,4 +10,4 @@ class WorkbenchSettings:
     DH_URL = config('DH_URL', default='', cast=str)
 
     # Path where store snapshot files
-    WB_SNAPSHOT_PATH = config('WB_SNAPSHOT_PATH', default='/mnt/wb_snapshots/', cast=str)
+    SNAPSHOT_PATH = config('SNAPSHOT_PATH', default='/mnt/snapshots/', cast=str)

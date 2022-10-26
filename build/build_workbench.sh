@@ -228,6 +228,7 @@ END2
 ###################
 # configure dns
 cat > /etc/resolv.conf <<END2
+nameserver 8.8.8.8
 nameserver 1.1.1.1
 END2
 

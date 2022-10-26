@@ -9,7 +9,7 @@ from workbench_core import WorkbenchCore
 
 def get_snapshot(file_name: str) -> dict:
     """Gets a json fixture and parses it to a dict."""
-    with Path(__file__).parent.joinpath('snapshots').joinpath(file_name + '.json').open() as file:
+    with Path(__file__).parent.joinpath('files/snapshots').joinpath(file_name + '.json').open() as file:
         return json.load(file)
 
 
