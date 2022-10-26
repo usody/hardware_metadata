@@ -8,11 +8,41 @@ and this project adheres to [Calendar Versioning](https://calver.org/#scheme) sc
 [2022.5.1-beta]
 
 ## preprod
-[2022.5.1-beta]
+[2022.10.1-beta]
 
 ----
-
 ## [Unreleased]
+- [changed] improve the warning message when settings variables are missing or empty
+  
+
+## [2022.10.1-beta] - 2022/10/26
+_(dmidecode = 3.3 | smartmontools = 7.2 | hwinfo = 21.72 | lshw = 02.19 | lspci = 3.7.0)_
+- [added] display summary of important data on screen (rel #3943)
+- [changed] rename Snapshot ID to SID
+- [changed] rename Device ID to DHID
+- [changed] rename WB_SNAPSHOT_PATH to SNAPSHOT_PATH on settings
+  
+## [2022.10.0-beta] - 2022/10/24
+_(dmidecode = 3.3 | smartmontools = 7.2 | hwinfo = 21.72 | lshw = 02.19 | lspci = 3.7.0)_
+- [added] new environment variable DISABLE_HWINFO (rel #3761)
+- [added] new nameserver 8.8.8.8 on debian resolv.conf file (rel #3762) 
+- [changed] refactor SID to numeric id based on snapshot_uuid (rel #3940)
+- [removed] hashids python dependency
+
+## [2022.8.0-beta] - 2022/08/03
+_(dmidecode = 3.3 | smartmontools = 7.2 | hwinfo = 21.72 | lshw = 02.19 | lspci = 3.7.0)_
+
+- [added] both boot compatibility (legacy & uefi)
+- [changed] refactor build script (start app abstraction)
+- [removed] TODO comments on build script
+- [removed] BOOT_TYPE selection
+
+## [2022.5.2-beta] - 2022/05/30
+_(dmidecode = 3.3 | smartmontools = 7.2 | hwinfo = 21.72 | lshw = 02.19 | lspci = 3.7.0)_
+
+- [fixed] autologin root user
+- [added] WIP uefi compatibility
+- [changed] smartctl output is reduced
 
 ## [2022.5.1-beta] - 2022/05/24
 _(dmidecode = 3.3 | smartmontools = 7.2 | hwinfo = 21.72 | lshw = 02.19 | lspci = 3.7.0)_
