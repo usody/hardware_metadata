@@ -22,11 +22,13 @@ class WorkbenchCore:
         self.type = 'Snapshot'
         self.snapshot_uuid = uuid.uuid4()
         self.software = 'Workbench'
-        self.version = '2022.10.0-beta'
+        self.version = '2022.10.1-beta'
         self.schema_api = '1.0.0'
         # Generate SID as an alternative id to the DHID when no internet 
         self.sid = self.generate_sid()
-        self.snapshots_path = WorkbenchSettings.WB_SNAPSHOT_PATH
+        self.dh_url = WorkbenchSettings.DH_URL
+        self.dh_token = WorkbenchSettings.DH_TOKEN
+        self.snapshots_path = WorkbenchSettings.SNAPSHOT_PATH
 
     def generate_sid(self):
             return str(self.snapshot_uuid.time_mid).rjust(5, '0')
@@ -216,7 +218,7 @@ class WorkbenchCore:
         try:
             json_file = '{date}_{sid}_snapshot.json'.format(date=self.timestamp.strftime("%Y-%m-%d_%Hh%Mm%Ss"),
                                                             sid=self.sid)
-            # Create snapshot folder
+            # Create snapshots folder
             Path(self.snapshots_path).mkdir(parents=True, exist_ok=True)
             with open(self.snapshots_path + json_file, 'w+') as file:
                 json.dump(snapshot, file)
@@ -227,19 +229,16 @@ class WorkbenchCore:
 
     def post_snapshot(self, snapshot):
         """Upload snapshot to server."""
-        url = WorkbenchSettings.DH_URL
-        token = WorkbenchSettings.DH_TOKEN
-
-        if url and token:
-            print('[DH URL]', url)
-            post_headers = {'Authorization': 'Basic ' + token, 'Content-type': 'application/json'}
+        if self.dh_url and self.dh_token:
+            print('[DH_URL]', self.dh_url)
+            post_headers = {'Authorization': 'Basic ' + self.dh_token, 'Content-type': 'application/json'}
 
             try:
-                response = requests.post(url, headers=post_headers, data=json.dumps(snapshot))
+                response = requests.post(self.dh_url, headers=post_headers, data=json.dumps(snapshot))
                 r = response.json()
                 if response.status_code == 201:
                     print('[INFO] Snapshot JSON successfully uploaded.')
-                    print('[DEVICE ID]', r['dhid'])
+                    print('[DHID]', r['dhid'])
                 elif response.status_code == 400:
                     print('[ERROR] We could not auto-upload the device.', response.status_code, '-', response.reason)
                     print('Response error:', r)
@@ -249,9 +248,15 @@ class WorkbenchCore:
                 return r
             except Exception as e:
                 print('[EXCEPTION] Post snapshot exception:', e)
-                return e
+                return None
         else:
             print('[WARNING] We could not auto-upload the device. Settings URL or TOKEN are empty.')
+    
+    def print_summary(self, response):
+         print('[SID]', self.sid)
+         print('[DH_URL]', self.dh_url)
+         if response:
+            print('[DHID]', r['dhid'])
 
 
 if '__main__' == __name__:
@@ -259,7 +264,7 @@ if '__main__' == __name__:
 
     print('[INIT] ====== Starting Workbench ======')
     print('[VERSION]', workbench.version)
-    print('[SNAPSHOT ID]', workbench.sid)
+    print('[SID]', workbench.sid)
 
     print('[STEP 1] ---- Generating Snapshot ----')
     snapshot = workbench.generate_snapshot()
@@ -268,6 +273,9 @@ if '__main__' == __name__:
     workbench.save_snapshot(snapshot)
 
     print('[STEP 3] ---- Uploading Snapshot ----')
-    workbench.post_snapshot(snapshot)
+    response = workbench.post_snapshot(snapshot)
 
     print('[EXIT] ====== Workbench finished ======')
+
+    print('-------------- [SUMMARY] --------------')
+    workbench.print_summary(response)
