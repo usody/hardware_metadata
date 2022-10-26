@@ -13,6 +13,11 @@ and this project adheres to [Calendar Versioning](https://calver.org/#scheme) sc
 ----
 ## [Unreleased]
 
+## [2022.10.0-beta] - 2022/10/24
+_(dmidecode = 3.3 | smartmontools = 7.2 | hwinfo = 21.72 | lshw = 02.19 | lspci = 3.7.0)_
+- [changed] refactor SID to numeric id (rel #3940)
+- [removed] hashids python dependency
+
 ## [2022.8.0-beta] - 2022/08/03
 _(dmidecode = 3.3 | smartmontools = 7.2 | hwinfo = 21.72 | lshw = 02.19 | lspci = 3.7.0)_
 
