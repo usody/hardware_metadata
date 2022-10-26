@@ -8,7 +8,7 @@ and this project adheres to [Calendar Versioning](https://calver.org/#scheme) sc
 [2022.5.1-beta]
 
 ## preprod
-[2022.8.0-beta]
+[2022.10.1-beta]
 
 ----
 ## [Unreleased]
