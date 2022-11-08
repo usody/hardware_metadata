@@ -24,16 +24,16 @@ install_WB_dependencies:
 	# Install WB python requirements
 	sudo pip3 install -r requirements.txt
 
-run_WB:
-	python3 workbench_core.py
+run:
+	DISABLE_HWINFO=1 python3 workbench_core.py
 
 test:
-	DISABLE_HWINFO=1 python3 -m unittest tests/test.py
+	DISABLE_HWINFO=1 python3 -m unittest tests/test.py -v
 
 boot_iso:
 	sudo qemu-system-x86_64 \
 		-enable-kvm -m 2G -vga qxl -netdev user,id=wan -device virtio-net,netdev=wan,id=nic1 \
-		-drive format=raw,file=build/wbiso/USODY_debug.iso,cache=none,if=virtio
+		-drive format=raw,file=build/wbiso/USODY_2022.8.0-beta.iso,cache=none,if=virtio
 
 # src https://www.ubuntubuzz.com/2021/04/how-to-boot-uefi-on-qemu.html
 #   needs `sudo apt-get install ovmf`
@@ -41,7 +41,7 @@ boot_iso_uefi:
 	sudo qemu-system-x86_64 \
 		-bios /usr/share/ovmf/OVMF.fd \
 		-enable-kvm -m 2G -vga qxl -netdev user,id=wan -device virtio-net,netdev=wan,id=nic1 \
-		-drive format=raw,file=build/wbiso/USODY_debug.iso,cache=none,if=virtio
+		-drive format=raw,file=build/wbiso/USODY_2022.8.0-beta.iso,cache=none,if=virtio
 
 boot_iso_uefi_secureboot:
 	# For ovmf 2020.08-1, the change of boot order is usually necessary because the UEFI shell has the highest boot priority in OVMF_VARS*.ms.fd.
