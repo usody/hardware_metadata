@@ -12,7 +12,15 @@ and this project adheres to [Calendar Versioning](https://calver.org/#scheme) sc
 
 ----
 ## [Unreleased]
-- [changed] improve the warning message when settings variables are missing or empty
+
+
+## [2022.11.0-beta] - 2022/11/08
+_(dmidecode = 3.3 | smartmontools = 7.2 | hwinfo = 21.72 | lshw = 02.19 | lspci = 3.7.0)_
+- [added] check for Internet connection and display message accordingly (rel #3653)
+- [added] new variable in the settings, VERSION (rel #3998)
+- [added] display the path and filename of the json (snapshot)
+- [changed] improve the warnings message
+- [changed] hardware data retrieval functions within a specific class
   
 
 ## [2022.10.1-beta] - 2022/10/26
