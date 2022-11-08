@@ -14,6 +14,11 @@ and this project adheres to [Calendar Versioning](https://calver.org/#scheme) sc
 ## [Unreleased]
 
 
+## [2022.11.1-beta] - 2022/11/08
+_(dmidecode = 3.3 | smartmontools = 7.2 | hwinfo = 21.72 | lshw = 02.19 | lspci = 3.7.0)_
+- [added] display 'No Settings Version' when version not defined
+- [changed] snapshot path on current dir if not defined on settings file
+
 ## [2022.11.0-beta] - 2022/11/08
 _(dmidecode = 3.3 | smartmontools = 7.2 | hwinfo = 21.72 | lshw = 02.19 | lspci = 3.7.0)_
 - [added] check for Internet connection and display message accordingly (rel #3653)

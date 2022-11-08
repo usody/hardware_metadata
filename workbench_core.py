@@ -23,14 +23,14 @@ class WorkbenchCore:
         self.type = 'Snapshot'
         self.snapshot_uuid = uuid.uuid4()
         self.software = 'Workbench'
-        self.version = '2022.11.0-beta'
+        self.version = '2022.11.1-beta'
         self.schema_api = '1.0.0'
         # Generate SID as an alternative id to the DHID when no internet 
         self.sid = self.generate_sid()
         self.dh_url = WorkbenchSettings.DH_URL
         self.dh_token = WorkbenchSettings.DH_TOKEN
-        self.snapshots_path = WorkbenchSettings.SNAPSHOT_PATH
-        self.settings_version = WorkbenchSettings.VERSION
+        self.snapshots_path = WorkbenchSettings.SNAPSHOT_PATH or os.getcwd()
+        self.settings_version = WorkbenchSettings.VERSION or 'No Settings Version'
 
     def generate_sid(self):
             return str(self.snapshot_uuid.time_mid).rjust(5, '0')
@@ -58,6 +58,7 @@ class WorkbenchCore:
             'software': self.software,
             'version': self.version,
             'schema_api': self.schema_api,
+            'settings_version': self.settings_version,
             'data': snapshot_data
         }
 
@@ -70,10 +71,12 @@ class WorkbenchCore:
             json_file = '{date}_{sid}_snapshot.json'.format(date=self.timestamp.strftime("%Y-%m-%d_%Hh%Mm%Ss"),
                                                             sid=self.sid)
             # Create snapshots folder
-            Path(self.snapshots_path).mkdir(parents=True, exist_ok=True)
-            with open(self.snapshots_path + json_file, 'w+') as file:
+            snapshot_folder=self.snapshots_path + '/snapshots/'
+            Path(snapshot_folder).mkdir(parents=True, exist_ok=True)
+            # Saving snapshot
+            with open(snapshot_folder + json_file, 'w+') as file:
                 json.dump(snapshot, file)
-            print('[INFO] Snapshot successfully saved on', self.snapshots_path)
+            print('[INFO] Snapshot successfully saved on', snapshot_folder)
             return json_file
         except Exception as e:
             print('[EXCEPTION] Save snapshot:', e)
@@ -105,7 +108,8 @@ class WorkbenchCore:
             else:
                 print('[WARNING] We could not auto-upload the device. Settings URL or TOKEN are empty.')
     
-    def print_summary(self,json_file, response):
+    def print_summary(self, json_file, response):
+        print('[SETTINGS]', self.settings_version)
         print('[SNAPSHOT JSON]', json_file)
         print('[SID]', self.sid)
         print('[DH_API]', self.dh_url)

@@ -7,13 +7,15 @@ class WorkbenchSettings:
     # Path where find settings.ini file
     config = AutoConfig(search_path='/mnt/wb_settings/')
 
+    # Name of settings version
+    VERSION = config('VERSION', default='', cast=str)
+
     # Env variables for DH parameters
     DH_TOKEN = config('DH_TOKEN', default='', cast=str)
     DH_URL = config('DH_URL', default='', cast=str)
-    VERSION = config('VERSION', default='', cast=str)
 
-    # Path where store snapshot files
-    SNAPSHOT_PATH = config('SNAPSHOT_PATH', default='/mnt/snapshots/', cast=str)
+    # Path where create snapshots folder
+    SNAPSHOT_PATH = config('SNAPSHOT_PATH', default='', cast=str)
 
 
 class WorkbenchUtils:
@@ -32,4 +34,4 @@ class WorkbenchUtils:
             return True
         except socket.error as ex:
             print('[WARNING] No Internet.', ex.strerror)
-            #return False
+            return False
