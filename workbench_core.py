@@ -23,7 +23,7 @@ class WorkbenchCore:
         self.type = 'Snapshot'
         self.snapshot_uuid = uuid.uuid4()
         self.software = 'Workbench'
-        self.version = '2022.10.1-beta'
+        self.version = '2022.11.0-beta'
         self.schema_api = '1.0.0'
         # Generate SID as an alternative id to the DHID when no internet 
         self.sid = self.generate_sid()
