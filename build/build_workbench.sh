@@ -248,7 +248,12 @@ prepare_app() {
   wb_dir="${WB_PATH}/chroot/opt/workbench"
   mkdir -p "${wb_dir}"
   ${SUDO} cp ../workbench_*.py "${wb_dir}"
-  ${SUDO} cp files/.profile "${WB_PATH}/chroot/root/"
+  cat > "${WB_PATH}/chroot/root/.profile" <<END
+stty -echo # Do not show what we type in terminal so it does not meddle with our nice output
+dmesg -n 1 # Do not report *useless* system messages to the terminal
+python3 /opt/workbench/workbench_core.py
+stty echo
+END
 
   # sequence of commands to install app in function run_chroot
   install_app_str="$(cat<<END
