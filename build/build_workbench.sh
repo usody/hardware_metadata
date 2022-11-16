@@ -248,8 +248,16 @@ prepare_app() {
   wb_dir="${WB_PATH}/chroot/opt/workbench"
   mkdir -p "${wb_dir}"
   ${SUDO} cp ../workbench_*.py "${wb_dir}"
+
+  if [ "${SSH_REVERSE_ENV}" ]; then
+    echo "BUILDING SSH_REVERSE"
+    exit 1
+    # TODO test and continue from here
+    bootstrap_ssh_reverse
+  fi
   cat > "${WB_PATH}/chroot/root/.profile" <<END
 stty -echo # Do not show what we type in terminal so it does not meddle with our nice output
+${SSH_COMMAND:-}
 dmesg -n 1 # Do not report *useless* system messages to the terminal
 python3 /opt/workbench/workbench_core.py
 stty echo
