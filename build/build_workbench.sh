@@ -192,9 +192,17 @@ create_persistence_partition() {
     ${SUDO} umount -f -l "${tmp_rw_mount}" >/dev/null 2>&1 || true
     mkdir -p "${tmp_rw_mount}"
     ${SUDO} mount "$(pwd)/${rw_img_path}" "${tmp_rw_mount}"
-    ${SUDO} mkdir -p "${tmp_rw_mount}/wb_settings"
-    ${SUDO} touch "${tmp_rw_mount}/wb_settings/settings.ini"
-    ${SUDO} mkdir -p "${tmp_rw_mount}/wb_snapshots"
+    ${SUDO} mkdir -p "${tmp_rw_mount}/wb_settings"    
+    cat > "${tmp_rw_mount}/wb_settings/settings.ini" <<END
+[settings]
+
+VERSION =
+
+DH_TOKEN =
+DH_URL =
+
+SNAPSHOT_PATH = /mnt
+END
     ${SUDO} umount "${tmp_rw_mount}"
 
     uuid="$(blkid "${rw_img_path}" | awk '{ print $3; }')"
@@ -432,7 +440,7 @@ main() {
   if [ "${DEBUG:-}" ]; then
     WB_VERSION='debug'
   else
-    WB_VERSION='2022.8.0-beta'
+    WB_VERSION='2022.11.2-beta'
   fi
   wbiso_name="USODY_${WB_VERSION}"
   hostname='workbench-live'
