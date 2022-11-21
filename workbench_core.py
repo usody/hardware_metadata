@@ -30,7 +30,7 @@ class WorkbenchCore:
         self.dh_url = WorkbenchSettings.DH_URL
         self.dh_token = WorkbenchSettings.DH_TOKEN
         self.snapshots_path = WorkbenchSettings.SNAPSHOT_PATH or os.getcwd()
-        self.settings_version = WorkbenchSettings.VERSION or 'No Settings Version'
+        self.settings_version = WorkbenchSettings.VERSION or 'No Settings Version (NaN)'
 
     def generate_sid(self):
             return str(self.snapshot_uuid.time_mid).rjust(5, '0')
@@ -77,6 +77,7 @@ class WorkbenchCore:
             with open(snapshot_folder + json_file, 'w+') as file:
                 json.dump(snapshot, file)
             print('[INFO] Snapshot successfully saved on', snapshot_folder)
+            print('[SNAPSHOT]', json_file)
             return json_file
         except Exception as e:
             print('[EXCEPTION] Save snapshot:', e)
@@ -109,12 +110,20 @@ class WorkbenchCore:
                 print('[WARNING] We could not auto-upload the device. Settings URL or TOKEN are empty.')
     
     def print_summary(self, json_file, response):
+        print('[VERSION]', self.version)
         print('[SETTINGS]', self.settings_version)
-        print('[SNAPSHOT JSON]', json_file)
         print('[SID]', self.sid)
-        print('[DH_API]', self.dh_url)
+        print('[SNAPSHOT]', json_file)
+
         if response:
-            print('[DHID]', r['dhid'])
+            r = response.json()
+            if response.status_code == 201:
+                print('[DH_URL]', r['url'])
+                print('[DHID]', r['dhid'])
+                print('[DEVICE_URL]', r['public_url'])
+            else:
+                print('[WARNING] We could not auto-upload the device.', r['code'], r['type'])
+                print('Response:', r['message'])
 
 
 if '__main__' == __name__:
