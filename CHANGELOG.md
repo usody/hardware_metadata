@@ -13,11 +13,19 @@ and this project adheres to [Calendar Versioning](https://calver.org/#scheme) sc
 ----
 ## [Unreleased]
 
+## [2022.11.2-beta] - 2022/11/21
+_(dmidecode = 3.3 | smartmontools = 7.2 | hwinfo = 21.72 | lshw = 02.19 | lspci = 3.7.0)_
+- [fixed] hwinfo field in the snapshot when DISABLE_HWINFO is on 
+- [added] default settings.ini template in the build script (rel #4068)
+- [added] display DEVICE URL & SNAPSHOT on summary screen
+- [added] settings_version new variable in the snapshot (rel #3999)
+- [changed] create .profile file in the build scipt
+- [changed] improve the messages displayed when interacting with DH API
 
 ## [2022.11.1-beta] - 2022/11/08
 _(dmidecode = 3.3 | smartmontools = 7.2 | hwinfo = 21.72 | lshw = 02.19 | lspci = 3.7.0)_
-- [added] display 'No Settings Version' when version not defined
-- [changed] snapshot path on current dir if not defined on settings file
+- [added] display 'No Settings Version (NaN)' when version not defined
+- [changed] save snapshots on current dir if not defined on settings file (rel #4053)
 
 ## [2022.11.0-beta] - 2022/11/08
 _(dmidecode = 3.3 | smartmontools = 7.2 | hwinfo = 21.72 | lshw = 02.19 | lspci = 3.7.0)_

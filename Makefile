@@ -33,7 +33,7 @@ test:
 boot_iso:
 	sudo qemu-system-x86_64 \
 		-enable-kvm -m 2G -vga qxl -netdev user,id=wan -device virtio-net,netdev=wan,id=nic1 \
-		-drive format=raw,file=build/wbiso/USODY_2022.8.0-beta.iso,cache=none,if=virtio
+		-drive format=raw,file=build/wbiso/USODY_2022.11.2-beta.iso,cache=none,if=virtio
 
 # src https://www.ubuntubuzz.com/2021/04/how-to-boot-uefi-on-qemu.html
 #   needs `sudo apt-get install ovmf`
@@ -41,7 +41,7 @@ boot_iso_uefi:
 	sudo qemu-system-x86_64 \
 		-bios /usr/share/ovmf/OVMF.fd \
 		-enable-kvm -m 2G -vga qxl -netdev user,id=wan -device virtio-net,netdev=wan,id=nic1 \
-		-drive format=raw,file=build/wbiso/USODY_2022.8.0-beta.iso,cache=none,if=virtio
+		-drive format=raw,file=build/wbiso/USODY_2022.11.2-beta.iso,cache=none,if=virtio
 
 boot_iso_uefi_secureboot:
 	# For ovmf 2020.08-1, the change of boot order is usually necessary because the UEFI shell has the highest boot priority in OVMF_VARS*.ms.fd.
