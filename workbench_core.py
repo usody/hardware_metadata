@@ -47,6 +47,8 @@ class WorkbenchCore:
         #   info: disabling it reduces the process time from 17 to 2 seconds
         if(not os.environ.get("DISABLE_HWINFO")):
           snapshot_data.update({'hwinfo': HardwareData.get_hwinfo_data()})
+        else:
+          snapshot_data.update({'hwinfo': ''})
         snapshot_data.update({'smart': HardwareData.get_smart_data()})
 
         # Generate snapshot
@@ -81,13 +83,12 @@ class WorkbenchCore:
             return json_file
         except Exception as e:
             print('[EXCEPTION] Save snapshot:', e)
-            return e
+            return None
 
     def post_snapshot(self, snapshot):
         """ Upload snapshot to server."""
         if WorkbenchUtils.internet():
             if self.dh_url and self.dh_token:
-                print('[DH_URL]', self.dh_url)
                 post_headers = {'Authorization': 'Basic ' + self.dh_token, 'Content-type': 'application/json'}
 
                 try:
@@ -96,18 +97,20 @@ class WorkbenchCore:
                     if response.status_code == 201:
                         print('[INFO] Snapshot JSON successfully uploaded.')
                         print('[DHID]', r['dhid'])
+                        print('[DH_URL]', r['url'])
                     elif response.status_code == 400:
-                        print('[ERROR] We could not auto-upload the device.', response.status_code, '-', response.reason)
+                        print('[ERROR] We could not auto-upload the device.', response.status_code, response.reason)
                         print('Response error:', r)
                     else:
-                        print('[ERROR] We could not auto-upload the device.')
-                        print('Response error:', r['code'], '-', r['type'], '-', r['message'])
-                    return r
+                        print('[WARNING] We could not auto-upload the device.', r['code'], r['type'])
+                        print('Response:', r['message'])
+                    return response
                 except Exception as e:
-                    print('[EXCEPTION] Post snapshot exception:', e)
-                    return None
+                    print('[EXCEPTION] POST snapshot exception:', e)
+                    return False
             else:
                 print('[WARNING] We could not auto-upload the device. Settings URL or TOKEN are empty.')
+                return False
     
     def print_summary(self, json_file, response):
         print('[VERSION]', self.version)
