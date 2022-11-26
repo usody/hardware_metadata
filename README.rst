@@ -33,7 +33,7 @@ In Debian 11 Bullseye following installation steps:
     sudo apt update
     sudo apt install -t bullseye-backports lshw=02.19*
     sudo apt install --no-install-recommends python3 python3-dev python3-pip dmidecode smartmontools hwinfo
-    sudo pip3 install python-dateutil==2.8.2 hashids==1.3.1 requests~=2.21.0
+    sudo pip3 install python-dateutil==2.8.2 hashids==1.3.1 requests~=2.21.0 python-decouple==3.3 colorlog==6.7.0
 
 Run Workbench
 *************
