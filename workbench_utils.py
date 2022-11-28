@@ -18,32 +18,39 @@ class WorkbenchSettings:
     # Path where create snapshots folder
     SNAPSHOT_PATH = config('SNAPSHOT_PATH', default='', cast=str)
 
-class WorkbenchLog:
+
+class HWMDLog:
 
     def setup_logger():
         """Return a logger with a default ColoredFormatter."""
 
         # To Define format - https://docs.python.org/3/library/stdtypes.html#printf-style-string-formatting
         formatter = ColoredFormatter(
-            " %(log_color)s[%(levelname)s] %(message)s",
+            ' %(log_color)s[%(levelname)s] %(message)s',
             datefmt=None,
             reset=True,
             log_colors={
-                "VERSION": "bold_cyan",
-                "SETTINGS": "bold_cyan",
-                "SID": "bold_purple",
-                "SNAPSHOT": "bold_purple",
-                "DEBUG": "thin",
-                "INFO": "green",
-                "WARNING": "yellow",
-                "ERROR": "red",
+                'VERSION': 'bold_cyan',
+                'SETTINGS': 'bold_cyan',
+                'SID': 'bold_cyan',
+                'SNAPSHOT': 'bold_cyan',
+                'DH_ID': 'purple',
+                'DH_URL': 'purple',
+                'DEVICE': 'purple',
+                'DEBUG': 'thin',
+                'INFO': 'green',
+                'WARNING': 'yellow',
+                'ERROR': 'red',
             },
         )
 
-        logging.addLevelName(60, "VERSION")
-        logging.addLevelName(62, "SETTINGS")
-        logging.addLevelName(64, "SID")
-        logging.addLevelName(66, "SNAPSHOT")
+        logging.addLevelName(60, 'VERSION')
+        logging.addLevelName(62, 'SETTINGS')
+        logging.addLevelName(64, 'SID')
+        logging.addLevelName(66, 'SNAPSHOT')
+        logging.addLevelName(70, 'DH_ID')
+        logging.addLevelName(72, 'DH_URL')
+        logging.addLevelName(74, 'DEVICE')
 
         logger = logging.getLogger()
         handler = logging.StreamHandler()
@@ -53,58 +60,38 @@ class WorkbenchLog:
         logger.setLevel(logging.INFO)
 
         return logger
+        
 
-    def print_run_info(self, wb):
-        #wb.log.log(20,f"[VERSION] {wb.version}")
-        #wb.log.log(20,"[VERSION] %(ver)s" % {'ver':wb.version})
-        wb.log.log(60,"  %s" % wb.version)
-        wb.log.log(62," %s" % wb.settings_version)
-        wb.log.log(64,"      %s" % wb.sid)
+class WorkbenchUtils:
+    """ A collection of useful functions for the correct working of the tool. """
 
-    def print_summary(self, wb, json_file, response):
-        print('-------------- [SUMMARY] --------------')
-        self.print_run_info(wb)
-        wb.log.log(66," %s" % json_file)
+    def print_hwmd_info(self, hwmd):
+        """ Display on the screen relevant information about the tool. """
+        hwmd.log.log(60, '  %s' % hwmd.version)
+        hwmd.log.log(62, ' %s' % hwmd.settings_version)
+        hwmd.log.log(64, '      %s' % hwmd.sid)
+
+    def print_dh_info(self, hwmd, r):
+        """ Display on the screen relevant information about the DH. """
+        hwmd.log.log(70, '    %s' % r['dhid'])
+        hwmd.log.log(72, '   %s' % r['url'])
+        hwmd.log.log(74, '   %s' % r['public_url'])
+
+    def print_summary(self, hwmd, json_file, response):
+        """ Display on the screen a summary of relevant information. """
+        hwmd.log.info('=================== ( SUMMARY ) ===================')
+        self.print_hwmd_info(hwmd)
+        hwmd.log.log(66, ' %s' % json_file)
 
         if response:
             r = response.json()
             if response.status_code == 201:
-                wb.log.info("DH_URL: %s" % r['url'])
-                wb.log.log(20,"DH_ID: %s" % r['dhid'])
-                wb.log.log(20,"DEVICE_URL: %s" % r['public_url'])
+                self.print_dh_info(hwmd, r)
             else:
-                wb.log.warning("We could not auto-upload the device. %s %s" % r['code'] % r['type'])
-                wb.log.log(30,"Response: %s" % r['message'])
-        
-        
-class DispatchingFormatter:
-    """Dispatch formatter for logger and it's sub logger.
-       Src: https://stackoverflow.com/a/34626685
-    """
-    def __init__(self, formatters, default_formatter):
-        self._formatters = formatters
-        self._default_formatter = default_formatter
+                hwmd.log.warning('We could not auto-upload the device. %s %s' % r['code'] % r['type'])
+                # hwmd.log.warning('Response: %s' % r['message'])
 
-    def format(self, record):
-        # Search from record's logger up to it's parents:
-        logger = logging.getLogger(record.name)
-        while logger:
-            # Check if suitable formatter for current logger exists:
-            if logger.name in self._formatters:
-                formatter = self._formatters[logger.name]
-                break
-            else:
-                logger = logger.parent
-        else:
-            # If no formatter found, just use default:
-            formatter = self._default_formatter
-        return formatter.format(record)
-
-
-class WorkbenchUtils:
-    """ Collection of useful functions for the working of the tool. """
-
-    def internet(host="8.8.8.8", port=53, timeout=3):
+    def internet(self, log, host='8.8.8.8', port=53, timeout=3):
         """
         Host: 8.8.8.8 (google-public-dns-a.google.com)
         OpenPort: 53/tcp
@@ -116,5 +103,5 @@ class WorkbenchUtils:
             socket.socket(socket.AF_INET, socket.SOCK_STREAM).connect((host, port))
             return True
         except socket.error as ex:
-            print('[WARNING] No Internet.', ex.strerror)
+            log.log.warning('No Internet', exc_info=ex)
             return False
