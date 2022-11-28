@@ -7,7 +7,7 @@ from pathlib import Path
 import requests
 import socket
 
-from workbench_utils import WorkbenchSettings, WorkbenchUtils, WorkbenchLog
+from workbench_utils import WorkbenchSettings, WorkbenchUtils, HWMDLog
 from workbench_hwdata import HardwareData
 
 
@@ -17,11 +17,10 @@ class WorkbenchCore:
     """
 
     def __init__(self):
-        self.log = WorkbenchLog.setup_logger()
+        self.log = HWMDLog.setup_logger()
         if os.geteuid() != 0:
-            self.log.error('Execute Workbench as root / sudo.')
+            self.hwmd_log.error('Execute Workbench as root / sudo.')
             exit(1)
-            #raise EnvironmentError('[ERROR] Execute Workbench as root / sudo.')
         self.timestamp = datetime.now()
         self.type = 'Snapshot'
         self.snapshot_uuid = uuid.uuid4()
@@ -66,7 +65,6 @@ class WorkbenchCore:
             'data': snapshot_data
         }
         self.log.info('Snapshot generated properly.')
-        #print('[INFO] Snapshot generated properly.')
         return snapshot
 
     def save_snapshot(self, snapshot):
@@ -81,18 +79,15 @@ class WorkbenchCore:
             with open(snapshot_folder + json_file, 'w+') as file:
                 json.dump(snapshot, file)
             self.log.info('Snapshot successfully saved on %s' % snapshot_folder)
-            #print('[INFO] Snapshot successfully saved on', snapshot_folder)
             self.log.log(66,' %s' %json_file)
-            #print('[SNAPSHOT]', json_file)
             return json_file
         except Exception as e:
             self.log.error('Save snapshot:',exc_info=e)
-            #print('[EXCEPTION] Save snapshot:', e)
             return None
 
     def post_snapshot(self, snapshot):
         """ Upload snapshot to server."""
-        if WorkbenchUtils.internet():
+        if hwmd_utils.internet(self.log):
             if self.dh_url and self.dh_token:
                 post_headers = {'Authorization': 'Basic ' + self.dh_token, 'Content-type': 'application/json'}
 
@@ -100,52 +95,40 @@ class WorkbenchCore:
                     response = requests.post(self.dh_url, headers=post_headers, data=json.dumps(snapshot))
                     r = response.json()
                     if response.status_code == 201:
-                        print('[INFO] Snapshot JSON successfully uploaded.')
-                        self.log.info("DH_ID: %s" % r['dhid'])
-                        self.log.info("DH_URL: %s" % r['url'])
-                        #print('[DH_ID]', r['dhid'])
-                        #print('[DH_URL]', r['url'])
+                        self.log.info('Snapshot JSON successfully uploaded.')
+                        hwmd_utils.print_dh_info(self, r)
                     elif response.status_code == 400:
-                        self.log.error('We could not auto-upload the device. (' + str(response.status_code) + ' ' + str(response.reason)+')')
-                        #print('[ERROR] We could not auto-upload the device.', response.status_code, response.reason)
+                        self.log.error('We could not auto-upload the device. {' + str(response.status_code) + ' ' + str(response.reason)+'}')
                         self.log.error('Response error: %s' % r)
-                        #print('Response error:', r)
                     else:
-                        self.log.warning('We could not auto-upload the device. (' + str(r['code']) + ' ' + str(r['type']) +')')
-                        #print('[WARNING] We could not auto-upload the device.', r['code'], r['type'])
-                        self.log.warning('Response: %s' % r['message'])
-                        #print('Response:', r['message'])
+                        self.log.warning('We could not auto-upload the device. {' + str(r['code']) + ' ' + str(r['type']) +'}')
+                        self.log.warning('Response: %s' % r['message']) 
                     return response
                 except Exception as e:
                     self.log.error('POST snapshot exception:', exc_info=e)
-                    #print('[EXCEPTION] POST snapshot exception:', e)
                     return False
             else:
                 self.log.warning('We could not auto-upload the device. Settings URL or TOKEN are empty.')
-                #print('[WARNING] We could not auto-upload the device. Settings URL or TOKEN are empty.')
                 return False
 
 
 if '__main__' == __name__:
     workbench_core = WorkbenchCore()
-    workbench_log = WorkbenchLog()
+    hwmd_utils = WorkbenchUtils()
 
-    print('============== Starting Workbench ==============')
+    print('----------------- [ STARTING HW METADATA ] -----------------')
 
-    workbench_log.print_run_info(workbench_core)
+    hwmd_utils.print_hwmd_info(workbench_core)
 
-    workbench_core.log.info('(STEP 1) ------ Generating Snapshot ------')
-    #print('[STEP 1] ---- Generating Snapshot ----')
+    workbench_core.log.info('|____________STEP 1:Generating Snapshot____________|')
     snapshot = workbench_core.generate_snapshot()
 
-    workbench_core.log.info('(STEP 2) ------ Saving Snapshot ------')    
-    #print('[STEP 2] ---- Saving Snapshot ----')
+    workbench_core.log.info('|____________STEP 2:Saving Snapshot________________|')    
     json_file = workbench_core.save_snapshot(snapshot)
 
-    workbench_core.log.info('(STEP3) ------ Uploading Snapshot ------')
-    #print('[STEP 3] ---- Uploading Snapshot ----')
+    workbench_core.log.info('|____________STEP 3:Uploading Snapshot_____________|')
     response = workbench_core.post_snapshot(snapshot)
 
-    print('============== Workbench finished ==============')
+    print('----------------- [ HW METADATA FINISHED ] -----------------')
 
-    workbench_log.print_summary(workbench_core, json_file, response)
+    hwmd_utils.print_summary(workbench_core, json_file, response)
