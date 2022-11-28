@@ -13,6 +13,14 @@ and this project adheres to [Calendar Versioning](https://calver.org/#scheme) sc
 ----
 ## [Unreleased]
 
+## [2022.11.3-beta] - 2022/11/28
+_(dmidecode = 3.3 | smartmontools = 7.2 | hwinfo = 21.72 | lshw = 02.19 | lspci = 3.7.0)_
+- [added] highlight the information displayed on screen (rel #3939)
+- [added] colorlog python module for display information
+- [added] HWMDLog class
+- [added] bash_history on build script
+- [removed] print function for display information
+
 ## [2022.11.2-beta] - 2022/11/21
 _(dmidecode = 3.3 | smartmontools = 7.2 | hwinfo = 21.72 | lshw = 02.19 | lspci = 3.7.0)_
 - [fixed] hwinfo field in the snapshot when DISABLE_HWINFO is on 
