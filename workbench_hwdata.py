@@ -20,20 +20,16 @@ class HardwareData:
             except Exception as e:
                 lshw_data = lshw_output.decode('utf8')
                 log.error('LSHW exception:', exc_info=e)
-                #print('[EXCEPTION] LSHW exception', e, '\r')
             else:
                 log.info('LSHW successfully completed.')
-                #print('[INFO] LSHW successfully completed.', '\r')
         elif proc.returncode < 0:
             try:
                 lshw_data = lshw_errors.decode('utf8')
             except Exception as e:
                 lshw_data = str(e)
                 log.error('LSHW exception:',exc_info=e)
-                #print('[EXCEPTION]', e, '\r')
             else:
                 log.error('LSHW failed execution with output: ' + str(lshw_errors))
-                #print('[ERROR] LSHW failed execution with output: ', lshw_errors, '\r')
         # TODO verify it returns a dict object
         return lshw_data
 
@@ -51,20 +47,16 @@ class HardwareData:
             except Exception as e:
                 dmidecode_data = str(e)
                 log.error('DMIDECODE exception:', exc_info=e)
-                #print('[EXCEPTION] DMIDECODE exception', e, '\r')
             else:
                 log.info('DMIDECODE successfully completed.')
-                #print('[INFO] DMIDECODE successfully completed.', '\r')
         elif proc.returncode < 0:
             try:
                 dmidecode_data = dmi_errors.decode('utf8')
             except Exception as e:
                 dmidecode_data = str(e)
                 log.error('DMIDECODE exception:', exc_info=e)
-                #print('[EXCEPTION] DMIDECODE exception', e, '\r')
             else:
                 log.error('DMIDECODE exception: ' + str(dmi_errors))
-                #print('[ERROR] DMIDECODE failed execution with output: ', dmi_errors, '\r')
 
         # TODO verify it returns a string object
         return dmidecode_data
@@ -83,20 +75,16 @@ class HardwareData:
             except Exception as e:
                 lspci_data = str(e)
                 log.error('LSPCI exception', exc_info=e)
-                #print('[EXCEPTION] LSPCI exception', e, '\r')
             else:
                 log.info('LSPCI successfully completed.')
-                #print('[INFO] LSPCI successfully completed.', '\r')
         elif proc.returncode < 0:
             try:
                 lspci_data = lspci_errors.decode('utf8')
             except Exception as e:
                 lspci_data = str(e)
                 log.error('LSPCI exception', exc_info=e)
-                #print('[EXCEPTION] LSPCI exception', e, '\r')
             else:
                 log.error('LSPCI failed execution with output: ' + str(lspci_errors))
-                #print('[ERROR] LSPCI failed execution with output: ', lspci_errors, '\r')
         # TODO verify it returns a string object
         return lspci_data
 
@@ -114,20 +102,16 @@ class HardwareData:
             except Exception as e:
                 hwinfo_data = str(e)
                 log.error('HWINFO exception', exc_info=e)
-                #print('[EXCEPTION] HWINFO exception', e, '\r')
             else:
                 log.info('HWINFO successfully completed.')
-                #print('[INFO] HWINFO successfully completed.', '\r')
         elif proc.returncode < 0:
             try:
                 hwinfo_data = hwinfo_errors.decode('utf8')
             except Exception as e:
                 hwinfo_data = str(e)
                 log.error('HWINFO exception', exc_info=e)
-                #print('[EXCEPTION] HWINFO exception', e, '\r')
             else:
                 log.error('HWINFO failed execution with output: ' + str(hwinfo_errors))
-                #print('[ERROR] HWINFO failed execution with output: ', hwinfo_errors, '\r')
         # TODO verify it returns a string object
         return hwinfo_data
 
@@ -143,7 +127,6 @@ class HardwareData:
             disk_info = json.loads(output_lsblk.decode('utf8'))
         except Exception as e:
             log.error('SMART exception:', exc_info=e)
-            #print('[EXCEPTION] Detecting disks information', e)
 
         smart_data = []
         if proc.returncode == 0:
@@ -162,19 +145,15 @@ class HardwareData:
                         except Exception as e:
                             smart_data.append(str(smart_output))
                             log.error('SMART exception on ' + disk['kname'] , exc_info=e)
-                            #print('[EXCEPTION] SMART on', disk['kname'], 'exception', e)
                         else:
                             smart_data.append(disk_data)
                             log.info('SMART on ' + disk['kname'] + ' successfully completed.')
-                            #print('[INFO] SMART on', disk['kname'], 'successfully completed.')
                     else:
                         log.error('SMART failed on ' + disk['kname'] + ' with output: ' + str(smart_errors))
-                        #print('[ERROR] SMART failed on', disk['kname'], 'with output:', smart_errors)
                         smart_data.append(str(smart_errors))
         else:
             # TODO: add ignore to str() functions for better resilience??
             log.error('Getting disks information failed with output: ' + str(errors_lsblk, errors="ignore"))
-            #print('[ERROR] Getting disks information failed with output:', errors_lsblk)
             return [errors_lsblk]
         # TODO verify it returns a list object
         return smart_data
