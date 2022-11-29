@@ -262,6 +262,9 @@ dmesg -n 1 # Do not report *useless* system messages to the terminal
 python3 /opt/workbench/workbench_core.py
 stty echo
 END
+cat > "${WB_PATH}/chroot/root/.bash_history" <<END
+exit
+END
 
   # sequence of commands to install app in function run_chroot
   install_app_str="$(cat<<END
@@ -273,7 +276,7 @@ apt-get install -y --no-install-recommends \
   dmidecode smartmontools hwinfo pciutils < /dev/null
 
 # Install WB python requirements
-pip3 install python-dateutil==2.8.2 hashids==1.3.1 requests~=2.21.0 python-decouple==3.3
+pip3 install python-dateutil==2.8.2 hashids==1.3.1 requests~=2.21.0 python-decouple==3.3 colorlog==6.7.0
 
 # Install lshw B02.19 utility using backports
 apt install -y -t ${VERSION_CODENAME}-backports lshw  < /dev/null
@@ -440,7 +443,7 @@ main() {
   if [ "${DEBUG:-}" ]; then
     WB_VERSION='debug'
   else
-    WB_VERSION='2022.11.2-beta'
+    WB_VERSION='2022.11.3-beta'
   fi
   wbiso_name="USODY_${WB_VERSION}"
   hostname='workbench-live'
