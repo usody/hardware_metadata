@@ -13,6 +13,14 @@ and this project adheres to [Calendar Versioning](https://calver.org/#scheme) sc
 ----
 ## [Unreleased]
 
+## [2022.12.0-beta] - 2022/12/12
+_(dmidecode = 3.3 | smartmontools = 7.2 | hwinfo = 21.72 | lshw = 02.19 | lspci = 3.7.0)_
+- [added] snapshots_clean on Makefile
+- [changed] rename all code to Hardware Metadata
+- [changed] delete unnecessary files on .gitignore
+- [changed] update README.md accordingly to HWMD
+- [fixed] add pciutils on debian requirements file
+
 ## [2022.11.3-beta] - 2022/11/28
 _(dmidecode = 3.3 | smartmontools = 7.2 | hwinfo = 21.72 | lshw = 02.19 | lspci = 3.7.0)_
 - [added] highlight the information displayed on screen (rel #3939)
