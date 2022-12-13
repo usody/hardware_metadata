@@ -5,3 +5,4 @@ dmidecode
 smartmontools
 hwinfo
 lshw
+pciutils
