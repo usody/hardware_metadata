@@ -4,9 +4,11 @@ import logging
 from decouple import AutoConfig
 from colorlog import ColoredFormatter
 
-class WorkbenchSettings:
+class HWMDSettings:
+    """Set of parameters to configure the correct working of the tool. """
+
     # Path where find settings.ini file
-    config = AutoConfig(search_path='/mnt/wb_settings/')
+    config = AutoConfig(search_path='/mnt/hwmd_settings/')
 
     # Name of settings version
     VERSION = config('VERSION', default='', cast=str)
@@ -22,7 +24,7 @@ class WorkbenchSettings:
 class HWMDLog:
 
     def setup_logger():
-        """Return a logger with a default ColoredFormatter."""
+        """Return a logger with a custom ColoredFormatter."""
 
         # To Define format - https://docs.python.org/3/library/stdtypes.html#printf-style-string-formatting
         formatter = ColoredFormatter(
@@ -62,23 +64,23 @@ class HWMDLog:
         return logger
         
 
-class WorkbenchUtils:
-    """ A collection of useful functions for the correct working of the tool. """
+class HWMDUtils:
+    """A collection of useful functions for the correct working of the tool."""
 
     def print_hwmd_info(self, hwmd):
-        """ Display on the screen relevant information about the tool. """
+        """Display on the screen relevant information about the tool."""
         hwmd.log.log(60, '  %s' % hwmd.version)
         hwmd.log.log(62, ' %s' % hwmd.settings_version)
         hwmd.log.log(64, '      %s' % hwmd.sid)
 
     def print_dh_info(self, hwmd, r):
-        """ Display on the screen relevant information about the DH. """
+        """Display on the screen relevant information about the DH."""
         hwmd.log.log(70, '    %s' % r['dhid'])
         hwmd.log.log(72, '   %s' % r['url'])
         hwmd.log.log(74, '   %s' % r['public_url'])
 
     def print_summary(self, hwmd, json_file, response):
-        """ Display on the screen a summary of relevant information. """
+        """Display on the screen a summary of relevant information."""
         hwmd.log.info('=================== ( SUMMARY ) ===================')
         self.print_hwmd_info(hwmd)
         hwmd.log.log(66, ' %s' % json_file)
@@ -90,6 +92,7 @@ class WorkbenchUtils:
             else:
                 hwmd.log.warning('We could not auto-upload the device. %s %s' % r['code'] % r['type'])
                 # hwmd.log.warning('Response: %s' % r['message'])
+        hwmd.log.info('Finished properly. You can press the power button to turn off.')
 
     def internet(self, log, host='8.8.8.8', port=53, timeout=3):
         """

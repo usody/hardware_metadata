@@ -7,11 +7,11 @@ from pathlib import Path
 import requests
 import socket
 
-from workbench_utils import WorkbenchSettings, WorkbenchUtils, HWMDLog
-from workbench_hwdata import HardwareData
+from hwmetadata_utils import HWMDSettings, HWMDUtils, HWMDLog
+from hwmetadata_retrieval import HWMDRetrieval
 
 
-class WorkbenchCore:
+class HWMDCore:
     """ Create a snapshot of your computer with hardware data and submit the information to a server.
         You must run this software as root / sudo.
     """
@@ -19,20 +19,20 @@ class WorkbenchCore:
     def __init__(self):
         self.log = HWMDLog.setup_logger()
         if os.geteuid() != 0:
-            self.hwmd_log.error('Execute Workbench as root / sudo.')
+            self.hwmd_log.error('Must be run as root / sudo.')
             exit(1)
         self.timestamp = datetime.now()
         self.type = 'Snapshot'
         self.snapshot_uuid = uuid.uuid4()
         self.software = 'Workbench'
-        self.version = '2022.11.3-beta'
+        self.version = '2022.12.0-beta'
         self.schema_api = '1.0.0'
         # Generate SID as an alternative id to the DHID when no internet 
         self.sid = self.generate_sid()
-        self.dh_url = WorkbenchSettings.DH_URL
-        self.dh_token = WorkbenchSettings.DH_TOKEN
-        self.snapshots_path = WorkbenchSettings.SNAPSHOT_PATH or os.getcwd()
-        self.settings_version = WorkbenchSettings.VERSION or 'No Settings Version (NaN)'
+        self.dh_url = HWMDSettings.DH_URL
+        self.dh_token = HWMDSettings.DH_TOKEN
+        self.snapshots_path = HWMDSettings.SNAPSHOT_PATH or os.getcwd()
+        self.settings_version = HWMDSettings.VERSION or 'No Settings Version (NaN)'
        
     def generate_sid(self):
             return str(self.snapshot_uuid.time_mid).rjust(5, '0')
@@ -40,17 +40,17 @@ class WorkbenchCore:
     def generate_snapshot(self):
         """ Getting hardware data and generate snapshot object."""
         snapshot_data = {}
-        snapshot_data.update({'lshw': HardwareData.get_lshw_data(self.log)})
-        snapshot_data.update({'dmidecode': HardwareData.get_dmi_data(self.log)})
-        snapshot_data.update({'lspci': HardwareData.get_lspci_data(self.log)})
+        snapshot_data.update({'lshw': HWMDRetrieval.get_lshw_data(self.log)})
+        snapshot_data.update({'dmidecode': HWMDRetrieval.get_dmi_data(self.log)})
+        snapshot_data.update({'lspci': HWMDRetrieval.get_lspci_data(self.log)})
         # 2022-9-8: hwinfo is slow, it is in the stage of deprecation and it is not tested
         #   hence, don't run hwinfo on test situation
         #   info: disabling it reduces the process time from 17 to 2 seconds
         if(not os.environ.get("DISABLE_HWINFO")):
-          snapshot_data.update({'hwinfo': HardwareData.get_hwinfo_data(self.log)})
+          snapshot_data.update({'hwinfo': HWMDRetrieval.get_hwinfo_data(self.log)})
         else:
           snapshot_data.update({'hwinfo': ''})
-        snapshot_data.update({'smart': HardwareData.get_smart_data(self.log)})
+        snapshot_data.update({'smart': HWMDRetrieval.get_smart_data(self.log)})
 
         # Generate snapshot
         snapshot = {
@@ -109,26 +109,27 @@ class WorkbenchCore:
                     return False
             else:
                 self.log.warning('We could not auto-upload the device. Settings URL or TOKEN are empty.')
+                self.log.warning('You can manually upload the snapshot.')
                 return False
 
 
 if '__main__' == __name__:
-    workbench_core = WorkbenchCore()
-    hwmd_utils = WorkbenchUtils()
+    hwmd_core = HWMDCore()
+    hwmd_utils = HWMDUtils()
 
     print('----------------- [ STARTING HW METADATA ] -----------------')
 
-    hwmd_utils.print_hwmd_info(workbench_core)
+    hwmd_utils.print_hwmd_info(hwmd_core)
 
-    workbench_core.log.info('|____________STEP 1:Generating Snapshot____________|')
-    snapshot = workbench_core.generate_snapshot()
+    hwmd_core.log.info('|____________STEP 1:Generating Snapshot____________|')
+    snapshot = hwmd_core.generate_snapshot()
 
-    workbench_core.log.info('|____________STEP 2:Saving Snapshot________________|')    
-    json_file = workbench_core.save_snapshot(snapshot)
+    hwmd_core.log.info('|____________STEP 2:Saving Snapshot________________|')    
+    json_file = hwmd_core.save_snapshot(snapshot)
 
-    workbench_core.log.info('|____________STEP 3:Uploading Snapshot_____________|')
-    response = workbench_core.post_snapshot(snapshot)
+    hwmd_core.log.info('|____________STEP 3:Uploading Snapshot_____________|')
+    response = hwmd_core.post_snapshot(snapshot)
 
     print('----------------- [ HW METADATA FINISHED ] -----------------')
 
-    hwmd_utils.print_summary(workbench_core, json_file, response)
+    hwmd_utils.print_summary(hwmd_core, json_file, response)

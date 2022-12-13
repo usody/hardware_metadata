@@ -3,7 +3,7 @@ import json
 
 
 
-class HardwareData:
+class HWMDRetrieval:
     """ Collect as much hardware data as possible using lshw, dmidecode, lspci and others tools."""
 
     def get_lshw_data(log):

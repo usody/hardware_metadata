@@ -30,18 +30,18 @@ END
 
 create_iso() {
   # Copy kernel and initramfs
-  ${SUDO} cp ${WB_PATH}/chroot/boot/vmlinuz-* ${WB_PATH}/staging/live/vmlinuz
-  ${SUDO} cp ${WB_PATH}/chroot/boot/initrd.img-* ${WB_PATH}/staging/live/initrd
+  ${SUDO} cp ${HWMD_PATH}/chroot/boot/vmlinuz-* ${HWMD_PATH}/staging/live/vmlinuz
+  ${SUDO} cp ${HWMD_PATH}/chroot/boot/initrd.img-* ${HWMD_PATH}/staging/live/initrd
   # Creating ISO
-  wbiso_path="${WB_PATH}/${wbiso_name}.iso"
+  iso_path="${HWMD_PATH}/${iso_name}.iso"
 
   # 0x14 is FAT16 Hidden FAT16 <32, this is the only format detected in windows10 automatically when using a persistent volume of 10 MB
   ${SUDO} xorrisofs \
     -verbose \
     -iso-level 3 \
-    -o "${wbiso_path}" \
+    -o "${iso_path}" \
     -full-iso9660-filenames \
-    -volid "${wbiso_name}" \
+    -volid "${iso_name}" \
     -isohybrid-mbr /usr/lib/ISOLINUX/isohdpfx.bin \
     -eltorito-boot \
       isolinux/isolinux.bin \
@@ -53,11 +53,11 @@ create_iso() {
       -e /EFI/boot/efiboot.img \
       -no-emul-boot \
       -isohybrid-gpt-basdat \
-    -append_partition 2 0xef ${WB_PATH}/staging/EFI/boot/efiboot.img \
+    -append_partition 2 0xef ${HWMD_PATH}/staging/EFI/boot/efiboot.img \
     -append_partition 3 0x14 "${rw_img_path}" \
-    "${WB_PATH}/staging"
+    "${HWMD_PATH}/staging"
 
-  printf "\n\n  Image generated in build/${wbiso_path}\n\n"
+  printf "\n\n  Image generated in build/${iso_path}\n\n"
 }
 
 isolinux_boot() {
@@ -92,16 +92,16 @@ LABEL linux
 END
 )"
   #   TIMEOUT 60 means 6 seconds :)
-  sudo tee "${WB_PATH}/staging/isolinux/isolinux.cfg" <<EOF
+  sudo tee "${HWMD_PATH}/staging/isolinux/isolinux.cfg" <<EOF
 ${isolinuxcfg_str}
 EOF
-  ${SUDO} cp /usr/lib/ISOLINUX/isolinux.bin "${WB_PATH}/staging/isolinux/"
-  ${SUDO} cp /usr/lib/syslinux/modules/bios/* "${WB_PATH}/staging/isolinux/"
+  ${SUDO} cp /usr/lib/ISOLINUX/isolinux.bin "${HWMD_PATH}/staging/isolinux/"
+  ${SUDO} cp /usr/lib/syslinux/modules/bios/* "${HWMD_PATH}/staging/isolinux/"
 }
 
 grub_boot() {
   grubcfg_str="$(cat <<END
-search --set=root --file /${wbiso_name}
+search --set=root --file /${iso_name}
 
 set default="0"
 set timeout=1
@@ -119,23 +119,23 @@ menuentry "Debian Live [EFI/GRUB] (nomodeset)" {
 }
 END
 )"
-  ${SUDO} tee "${WB_PATH}/staging/boot/grub/grub.cfg" <<EOF
+  ${SUDO} tee "${HWMD_PATH}/staging/boot/grub/grub.cfg" <<EOF
 ${grubcfg_str}
 EOF
 
-  ${SUDO} tee "${WB_PATH}/tmp/grub-standalone.cfg" <<EOF
-search --set=root --file /${wbiso_name}
+  ${SUDO} tee "${HWMD_PATH}/tmp/grub-standalone.cfg" <<EOF
+search --set=root --file /${iso_name}
 set prefix=(\$root)/boot/grub/
 configfile /boot/grub/grub.cfg
 EOF
-  ${SUDO} cp -r /usr/lib/grub/x86_64-efi/* "${WB_PATH}/staging/boot/grub/x86_64-efi/"
+  ${SUDO} cp -r /usr/lib/grub/x86_64-efi/* "${HWMD_PATH}/staging/boot/grub/x86_64-efi/"
 
   ${SUDO} grub-mkstandalone \
     --format=x86_64-efi \
-    --output=${WB_PATH}/tmp/bootx64.efi \
+    --output=${HWMD_PATH}/tmp/bootx64.efi \
     --locales="" \
     --fonts="" \
-    "boot/grub/grub.cfg=${WB_PATH}/tmp/grub-standalone.cfg"
+    "boot/grub/grub.cfg=${HWMD_PATH}/tmp/grub-standalone.cfg"
 
   # prepare uefi secureboot files
   #   bootx64 is the filename is looking to boot, and we force it to be the shimx64 file for uefi secureboot
@@ -143,10 +143,10 @@ EOF
   #   grubx64 looks for a file in /EFI/debian/grub.cfg -> src src https://unix.stackexchange.com/questions/648089/uefi-grub-not-finding-config-file
   ${SUDO} cp /usr/lib/shim/shimx64.efi.signed /tmp/bootx64.efi
   ${SUDO} cp /usr/lib/grub/x86_64-efi-signed/grubx64.efi.signed /tmp/grubx64.efi
-  ${SUDO} cp ${WB_PATH}/tmp/grub-standalone.cfg ${WB_PATH}/staging/EFI/debian/grub.cfg
+  ${SUDO} cp ${HWMD_PATH}/tmp/grub-standalone.cfg ${HWMD_PATH}/staging/EFI/debian/grub.cfg
 
   (
-    cd ${WB_PATH}/staging/EFI/boot
+    cd ${HWMD_PATH}/staging/EFI/boot
       ${SUDO} dd if=/dev/zero of=efiboot.img bs=1M count=20
       ${SUDO} mkfs.vfat efiboot.img
       ${SUDO} mmd -i efiboot.img efi efi/boot
@@ -172,8 +172,8 @@ compress_chroot_dir() {
   # why squashfs -> https://unix.stackexchange.com/questions/163190/why-do-liveusbs-use-squashfs-and-similar-file-systems
   # noappend option needed to avoid this situation -> https://unix.stackexchange.com/questions/80447/merging-preexisting-source-folders-in-mksquashfs
   ${SUDO} mksquashfs \
-    ${WB_PATH}/chroot \
-    ${WB_PATH}/staging/live/filesystem.squashfs \
+    ${HWMD_PATH}/chroot \
+    ${HWMD_PATH}/staging/live/filesystem.squashfs \
     ${DEBUG_SQUASHFS_ARGS:-} \
     -noappend -e boot
 }
@@ -181,8 +181,8 @@ compress_chroot_dir() {
 
 create_persistence_partition() {
   # persistent partition
-  rw_img_name="wbp_vfat.img"
-  rw_img_path="${WB_PATH}/staging/${rw_img_name}"
+  rw_img_name="hwmdp_vfat.img"
+  rw_img_path="${HWMD_PATH}/staging/${rw_img_name}"
   if [ ! -f "${rw_img_path}" ] || [ "${DEBUG:-}" ]; then
     ${SUDO} dd if=/dev/zero of="${rw_img_path}" bs=10M count=1
     ${SUDO} mkfs.vfat "${rw_img_path}"
@@ -192,14 +192,14 @@ create_persistence_partition() {
     ${SUDO} umount -f -l "${tmp_rw_mount}" >/dev/null 2>&1 || true
     mkdir -p "${tmp_rw_mount}"
     ${SUDO} mount "$(pwd)/${rw_img_path}" "${tmp_rw_mount}"
-    ${SUDO} mkdir -p "${tmp_rw_mount}/wb_settings"    
-    cat > "${tmp_rw_mount}/wb_settings/settings.ini" <<END
+    ${SUDO} mkdir -p "${tmp_rw_mount}/hwmd_settings"    
+    cat > "${tmp_rw_mount}/hwmd_settings/settings.ini" <<END
 [settings]
 
-VERSION =
+VERSION = 
 
-DH_TOKEN =
-DH_URL =
+DH_TOKEN = 
+DH_URL = 
 
 SNAPSHOT_PATH = /mnt
 END
@@ -208,7 +208,7 @@ END
     uuid="$(blkid "${rw_img_path}" | awk '{ print $3; }')"
     # no fail on boot -> src https://askubuntu.com/questions/14365/mount-an-external-drive-at-boot-time-only-if-it-is-plugged-in/99628#99628
     # use tee instead of cat -> src https://stackoverflow.com/questions/2953081/how-can-i-write-a-heredoc-to-a-file-in-bash-script/17093489#17093489
-    ${SUDO} tee "${WB_PATH}/chroot/etc/fstab" <<END
+    ${SUDO} tee "${HWMD_PATH}/chroot/etc/fstab" <<END
 # next three lines originally appeared on fstab, we preserve them
 # UNCONFIGURED FSTAB FOR BASE SYSTEM
 overlay / overlay rw 0 0
@@ -217,7 +217,7 @@ ${uuid} /mnt vfat defaults,nofail 0 0
 END
   fi
   # src https://manpages.debian.org/testing/open-infrastructure-system-boot/persistence.conf.5.en.html
-  echo "/ union" | ${SUDO} tee "${WB_PATH}/chroot/persistence.conf"
+  echo "/ union" | ${SUDO} tee "${HWMD_PATH}/chroot/persistence.conf"
 }
 
 
@@ -253,16 +253,16 @@ END
 
 prepare_app() {
   # prepare app during prepare_chroot_env
-  wb_dir="${WB_PATH}/chroot/opt/workbench"
-  mkdir -p "${wb_dir}"
-  ${SUDO} cp ../workbench_*.py "${wb_dir}"
-  cat > "${WB_PATH}/chroot/root/.profile" <<END
+  hwmd_dir="${HWMD_PATH}/chroot/opt/hwmd"
+  mkdir -p "${hwmd_dir}"
+  ${SUDO} cp ../hwmetadata_*.py "${hwmd_dir}"
+  cat > "${HWMD_PATH}/chroot/root/.profile" <<END
 stty -echo # Do not show what we type in terminal so it does not meddle with our nice output
 dmesg -n 1 # Do not report *useless* system messages to the terminal
-python3 /opt/workbench/workbench_core.py
+python3 /opt/hwmd/hwmetadata_core.py
 stty echo
 END
-cat > "${WB_PATH}/chroot/root/.bash_history" <<END
+cat > "${HWMD_PATH}/chroot/root/.bash_history" <<END
 exit
 END
 
@@ -270,13 +270,13 @@ END
   install_app_str="$(cat<<END
 echo 'Install Workbench requirements'
 
-# Install WB debian requirements
+# Install HWMD debian requirements
 apt-get install -y --no-install-recommends \
   python3 python3-dev python3-pip \
   dmidecode smartmontools hwinfo pciutils < /dev/null
 
-# Install WB python requirements
-pip3 install python-dateutil==2.8.2 hashids==1.3.1 requests~=2.21.0 python-decouple==3.3 colorlog==6.7.0
+# Install HWMD python requirements
+pip3 install python-dateutil==2.8.2 requests~=2.21.0 python-decouple==3.3 colorlog==6.7.0
 
 # Install lshw B02.19 utility using backports
 apt install -y -t ${VERSION_CODENAME}-backports lshw  < /dev/null
@@ -287,7 +287,7 @@ END
 run_chroot() {
   # non interactive chroot -> src https://stackoverflow.com/questions/51305706/shell-script-that-does-chroot-and-execute-commands-in-chroot
   # stop apt-get from greedily reading the stdin -> src https://askubuntu.com/questions/638686/apt-get-exits-bash-script-after-installing-packages/638754#638754
-  ${SUDO} chroot ${WB_PATH}/chroot <<CHROOT
+  ${SUDO} chroot ${HWMD_PATH}/chroot <<CHROOT
 set -x
 set -e
 
@@ -367,10 +367,10 @@ prepare_chroot_env() {
     echo "TAKING OS-RELEASE FILE"
   fi
 
-  chroot_path="${WB_PATH}/chroot"
+  chroot_path="${HWMD_PATH}/chroot"
   if [ ! -d "${chroot_path}" ]; then
-    ${SUDO} debootstrap --arch=amd64 --variant=minbase ${VERSION_CODENAME} ${WB_PATH}/chroot http://deb.debian.org/debian/
-    ${SUDO} chown -R "${USER}:" ${WB_PATH}/chroot
+    ${SUDO} debootstrap --arch=amd64 --variant=minbase ${VERSION_CODENAME} ${HWMD_PATH}/chroot http://deb.debian.org/debian/
+    ${SUDO} chown -R "${USER}:" ${HWMD_PATH}/chroot
   fi
 
   prepare_app
@@ -401,17 +401,17 @@ install_requirements() {
 
 # thanks https://willhaley.com/blog/custom-debian-live-environment/
 create_base_dirs() {
-  mkdir -p ${WB_PATH}
-  mkdir -p ${WB_PATH}/staging/EFI/boot
-  mkdir -p ${WB_PATH}/staging/boot/grub/x86_64-efi
-  mkdir -p ${WB_PATH}/staging/isolinux
-  mkdir -p ${WB_PATH}/staging/live
-  mkdir -p ${WB_PATH}/tmp
+  mkdir -p ${HWMD_PATH}
+  mkdir -p ${HWMD_PATH}/staging/EFI/boot
+  mkdir -p ${HWMD_PATH}/staging/boot/grub/x86_64-efi
+  mkdir -p ${HWMD_PATH}/staging/isolinux
+  mkdir -p ${HWMD_PATH}/staging/live
+  mkdir -p ${HWMD_PATH}/tmp
   # usb name
-  ${SUDO} touch ${WB_PATH}/staging/${wbiso_name}
+  ${SUDO} touch ${HWMD_PATH}/staging/${iso_name}
 
   # for uefi secure boot grub config file
-  mkdir -p ${WB_PATH}/staging/EFI/debian
+  mkdir -p ${HWMD_PATH}/staging/EFI/debian
 }
 
 # this function is used both in shell and chroot
@@ -428,11 +428,11 @@ detect_user() {
     # jump to current dir where the script is so relative links work
     cd "\$(dirname "\${0}")"
     # workbench working directory to build the iso
-    WB_PATH="wbiso"
+    HWMD_PATH="iso"
   # detect pure root
   elif [ "\${userid}" = 0 ]; then
     SUDO=''
-    WB_PATH="/opt/workbench_live_dev"
+    HWMD_PATH="/opt/hwmd_live_dev"
   fi
 }
 END
@@ -441,12 +441,12 @@ END
 main() {
 
   if [ "${DEBUG:-}" ]; then
-    WB_VERSION='debug'
+    HWMD_VERSION='debug'
   else
-    WB_VERSION='2022.11.3-beta'
+    HWMD_VERSION='2022.12.0-beta'
   fi
-  wbiso_name="USODY_${WB_VERSION}"
-  hostname='workbench-live'
+  iso_name="USODY_${HWMD_VERSION}"
+  hostname='hwmd-live'
   root_passwd='workbench'
 
   eval "${detect_user_str}" && detect_user
