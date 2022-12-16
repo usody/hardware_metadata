@@ -19,7 +19,7 @@ class HWMDCore:
     def __init__(self):
         self.log = HWMDLog.setup_logger()
         if os.geteuid() != 0:
-            self.hwmd_log.error('Must be run as root / sudo.')
+            self.log.error('Must be run as root / sudo.')
             exit(1)
         self.timestamp = datetime.now()
         self.type = 'Snapshot'
