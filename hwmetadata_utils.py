@@ -106,5 +106,5 @@ class HWMDUtils:
             socket.socket(socket.AF_INET, socket.SOCK_STREAM).connect((host, port))
             return True
         except socket.error as ex:
-            log.log.warning('No Internet', exc_info=ex)
+            log.warning('No Internet', exc_info=ex)
             return False
