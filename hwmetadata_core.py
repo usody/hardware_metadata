@@ -25,13 +25,13 @@ class HWMDCore:
         self.type = 'Snapshot'
         self.snapshot_uuid = uuid.uuid4()
         self.software = 'Workbench'
-        self.version = '2022.12.0-beta'
+        self.version = '2022.12.1-beta'
         self.schema_api = '1.0.0'
         # Generate SID as an alternative id to the DHID when no internet 
         self.sid = self.generate_sid()
         self.dh_url = HWMDSettings.DH_URL
         self.dh_token = HWMDSettings.DH_TOKEN
-        self.snapshots_path = HWMDSettings.SNAPSHOT_PATH or os.getcwd()
+        self.snapshots_path = HWMDSettings.SNAPSHOTS_PATH or os.getcwd()
         self.settings_version = HWMDSettings.VERSION or 'No Settings Version (NaN)'
        
     def generate_sid(self):
@@ -73,12 +73,12 @@ class HWMDCore:
             json_file = '{date}_{sid}_snapshot.json'.format(date=self.timestamp.strftime("%Y-%m-%d_%Hh%Mm%Ss"),
                                                             sid=self.sid)
             # Create snapshots folder
-            snapshot_folder=self.snapshots_path + '/snapshots/'
-            Path(snapshot_folder).mkdir(parents=True, exist_ok=True)
+            snapshots_folder=self.snapshots_path + '/snapshots/'
+            Path(snapshots_folder).mkdir(parents=True, exist_ok=True)
             # Saving snapshot
-            with open(snapshot_folder + json_file, 'w+') as file:
+            with open(snapshots_folder + json_file, 'w+') as file:
                 json.dump(snapshot, file)
-            self.log.info('Snapshot successfully saved on %s' % snapshot_folder)
+            self.log.info('Snapshot successfully saved on %s' % snapshots_folder)
             self.log.log(66,' %s' %json_file)
             return json_file
         except Exception as e:

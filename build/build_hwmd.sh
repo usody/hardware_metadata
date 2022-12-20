@@ -196,12 +196,12 @@ create_persistence_partition() {
     cat > "${tmp_rw_mount}/hwmd_settings/settings.ini" <<END
 [settings]
 
-VERSION = 
+DH_TOKEN =
+DH_URL =
 
-DH_TOKEN = 
-DH_URL = 
-
-SNAPSHOT_PATH = /mnt
+SNAPSHOTS_PATH = /mnt
+LOGS_PATH = /mnt
+VERSION =
 END
     ${SUDO} umount "${tmp_rw_mount}"
 
