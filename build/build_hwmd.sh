@@ -262,8 +262,9 @@ dmesg -n 1 # Do not report *useless* system messages to the terminal
 python3 /opt/hwmd/hwmetadata_core.py
 stty echo
 END
-cat > "${HWMD_PATH}/chroot/root/.bash_history" <<END
 #TODO add some useful commands
+cat > "${HWMD_PATH}/chroot/root/.bash_history" <<END
+poweroff
 END
 
   # sequence of commands to install app in function run_chroot
