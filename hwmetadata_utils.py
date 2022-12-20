@@ -1,6 +1,8 @@
+import os
 import socket
 import logging
 
+from pathlib import Path
 from decouple import AutoConfig
 from colorlog import ColoredFormatter
 
@@ -10,15 +12,17 @@ class HWMDSettings:
     # Path where find settings.ini file
     config = AutoConfig(search_path='/mnt/hwmd_settings/')
 
-    # Name of settings version
-    VERSION = config('VERSION', default='', cast=str)
-
     # Env variables for DH parameters
     DH_TOKEN = config('DH_TOKEN', default='', cast=str)
     DH_URL = config('DH_URL', default='', cast=str)
 
     # Path where create snapshots folder
-    SNAPSHOT_PATH = config('SNAPSHOT_PATH', default='', cast=str)
+    SNAPSHOTS_PATH = config('SNAPSHOTS_PATH', default='', cast=str)
+    # Path where create logs folder
+    LOGS_PATH = config('LOGS_PATH', default='', cast=str)
+
+    # Name of settings version
+    VERSION = config('VERSION', default='', cast=str)
 
 
 class HWMDLog:
@@ -60,6 +64,12 @@ class HWMDLog:
         logger.addHandler(handler)
         # Set which level logs display
         logger.setLevel(logging.INFO)
+
+        # Create logs folder
+        logs_path = HWMDSettings.LOGS_PATH or os.getcwd()
+        logs_folder=logs_path + '/logs/'
+        Path(logs_folder).mkdir(parents=True, exist_ok=True)
+
 
         return logger
         
