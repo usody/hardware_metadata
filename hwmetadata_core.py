@@ -17,20 +17,24 @@ class HWMDCore:
     """
 
     def __init__(self):
-        self.log = HWMDLog.setup_logger()
+        self.hwmd_utils = HWMDUtils()
+        self.timestamp = datetime.now()
+        # Generate SID as an alternative id to the DHID when no internet
+        self.snapshot_uuid = uuid.uuid4()
+        self.sid = self.generate_sid()
+        self.log = HWMDLog.setup_logger(self.timestamp, self.sid)
         if os.geteuid() != 0:
             self.log.error('Must be run as root / sudo.')
             exit(1)
-        self.timestamp = datetime.now()
+        
         self.type = 'Snapshot'
-        self.snapshot_uuid = uuid.uuid4()
         self.software = 'Workbench'
         self.version = '2022.12.1-beta'
         self.schema_api = '1.0.0'
-        # Generate SID as an alternative id to the DHID when no internet 
-        self.sid = self.generate_sid()
+
         self.dh_url = HWMDSettings.DH_URL
         self.dh_token = HWMDSettings.DH_TOKEN
+
         self.snapshots_path = HWMDSettings.SNAPSHOTS_PATH or os.getcwd()
         self.settings_version = HWMDSettings.VERSION or 'No Settings Version (NaN)'
        
@@ -81,13 +85,14 @@ class HWMDCore:
             self.log.info('Snapshot successfully saved on %s' % snapshots_folder)
             self.log.log(66,' %s' %json_file)
             return json_file
-        except Exception as e:
-            self.log.error('Save snapshot:',exc_info=e)
+        except Exception as ex:
+            self.log.error('Save snapshot: %s' % ex)
+            self.log.debug('%s' % ex, exc_info=ex)
             return None
 
     def post_snapshot(self, snapshot):
         """ Upload snapshot to server."""
-        if hwmd_utils.internet(self.log):
+        if self.hwmd_utils.internet(self.log):
             if self.dh_url and self.dh_token:
                 post_headers = {'Authorization': 'Basic ' + self.dh_token, 'Content-type': 'application/json'}
 
@@ -96,40 +101,44 @@ class HWMDCore:
                     r = response.json()
                     if response.status_code == 201:
                         self.log.info('Snapshot JSON successfully uploaded.')
-                        hwmd_utils.print_dh_info(self, r)
-                    elif response.status_code == 400:
-                        self.log.error('We could not auto-upload the device. {' + str(response.status_code) + ' ' + str(response.reason)+'}')
-                        self.log.error('Response error: %s' % r)
+                        self.hwmd_utils.print_dh_info(self, r)
                     else:
                         self.log.warning('We could not auto-upload the device. {' + str(r['code']) + ' ' + str(r['type']) +'}')
-                        self.log.warning('Response: %s' % r['message']) 
+                        self.log.debug(r['message'])
                     return response
                 except Exception as e:
-                    self.log.error('POST snapshot exception:', exc_info=e)
+                    self.log.error('POST snapshot exception:%s' % ex)
+                    self.log.debug('%s' % ex, exc_info=ex)
                     return False
             else:
-                self.log.warning('We could not auto-upload the device. Settings URL or TOKEN are empty.')
+                self.log.warning('We could not auto-upload the device.')
+                self.log.warning('Settings URL or TOKEN are empty.')
                 self.log.warning('You can manually upload the snapshot.')
                 return False
 
 
 if '__main__' == __name__:
     hwmd_core = HWMDCore()
-    hwmd_utils = HWMDUtils()
 
-    print('----------------- [ STARTING HW METADATA ] -----------------')
+    print('------------------- [ STARTING HW METADATA ] -------------------')
 
-    hwmd_utils.print_hwmd_info(hwmd_core)
+    hwmd_core.hwmd_utils.print_hwmd_info(hwmd_core)
 
-    hwmd_core.log.info('|____________STEP 1:Generating Snapshot____________|')
+    step1 = '___________________(STEP 1:Generating Snapshot)_______________'
+    print(step1)
+    hwmd_core.log.debug('%s' %step1)
     snapshot = hwmd_core.generate_snapshot()
 
-    hwmd_core.log.info('|____________STEP 2:Saving Snapshot________________|')    
+    step2 = '___________________(STEP 2:Saving Snapshot)___________________'
+    print(step2)
+    hwmd_core.log.debug('%s' %step2)    
     json_file = hwmd_core.save_snapshot(snapshot)
 
-    hwmd_core.log.info('|____________STEP 3:Uploading Snapshot_____________|')
+    step3 = '___________________(STEP 3:Uploading Snapshot)________________'
+    print(step3)
+    hwmd_core.log.debug('%s' %step3)
     response = hwmd_core.post_snapshot(snapshot)
 
-    print('----------------- [ HW METADATA FINISHED ] -----------------')
+    print('------------------- [ HW METADATA FINISHED ] -------------------')
 
-    hwmd_utils.print_summary(hwmd_core, json_file, response)
+    hwmd_core.hwmd_utils.print_summary(hwmd_core, json_file, response)

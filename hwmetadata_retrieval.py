@@ -19,7 +19,8 @@ class HWMDRetrieval:
                 lshw_data = json.loads(lshw_output.decode('utf8'))
             except Exception as e:
                 lshw_data = lshw_output.decode('utf8')
-                log.error('LSHW exception:', exc_info=e)
+                log.error('LSHW exception: %s' %e.__class__.__name__)
+                log.debug('%s' %e, exc_info=e)
             else:
                 log.info('LSHW successfully completed.')
         elif proc.returncode < 0:
@@ -27,7 +28,8 @@ class HWMDRetrieval:
                 lshw_data = lshw_errors.decode('utf8')
             except Exception as e:
                 lshw_data = str(e)
-                log.error('LSHW exception:',exc_info=e)
+                log.error('LSHW exception: %s' %e.__class__.__name__)
+                log.debug('%s' %e, exc_info=e)
             else:
                 log.error('LSHW failed execution with output: ' + str(lshw_errors))
         # TODO verify it returns a dict object
@@ -46,7 +48,8 @@ class HWMDRetrieval:
                 dmidecode_data = dmi_output.decode('utf8')
             except Exception as e:
                 dmidecode_data = str(e)
-                log.error('DMIDECODE exception:', exc_info=e)
+                log.error('DMIDECODE exception: %s' %e.__class__.__name__)
+                log.debug('%s' %e, exc_info=e)
             else:
                 log.info('DMIDECODE successfully completed.')
         elif proc.returncode < 0:
@@ -54,7 +57,8 @@ class HWMDRetrieval:
                 dmidecode_data = dmi_errors.decode('utf8')
             except Exception as e:
                 dmidecode_data = str(e)
-                log.error('DMIDECODE exception:', exc_info=e)
+                log.error('DMIDECODE exception: %s' %e.__class__.__name__)
+                log.debug('%s' %e, exc_info=e)
             else:
                 log.error('DMIDECODE exception: ' + str(dmi_errors))
 
@@ -74,7 +78,8 @@ class HWMDRetrieval:
                 lspci_data = lspci_output.decode('utf8')
             except Exception as e:
                 lspci_data = str(e)
-                log.error('LSPCI exception', exc_info=e)
+                log.error('LSPCI exception: %s' %e.__class__.__name__)
+                log.debug('%s' %e, exc_info=e)
             else:
                 log.info('LSPCI successfully completed.')
         elif proc.returncode < 0:
@@ -82,7 +87,8 @@ class HWMDRetrieval:
                 lspci_data = lspci_errors.decode('utf8')
             except Exception as e:
                 lspci_data = str(e)
-                log.error('LSPCI exception', exc_info=e)
+                log.error('LSPCI exception:' %e.__class__.__name__)
+                log.debug('%s' %e, exc_info=e)
             else:
                 log.error('LSPCI failed execution with output: ' + str(lspci_errors))
         # TODO verify it returns a string object
@@ -101,7 +107,8 @@ class HWMDRetrieval:
                 hwinfo_data = hwinfo_output.decode('utf8')
             except Exception as e:
                 hwinfo_data = str(e)
-                log.error('HWINFO exception', exc_info=e)
+                log.error('HWINFO exception: %s' %e.__class__.__name__)
+                log.debug('%s' %e, exc_info=e)
             else:
                 log.info('HWINFO successfully completed.')
         elif proc.returncode < 0:
@@ -109,7 +116,8 @@ class HWMDRetrieval:
                 hwinfo_data = hwinfo_errors.decode('utf8')
             except Exception as e:
                 hwinfo_data = str(e)
-                log.error('HWINFO exception', exc_info=e)
+                log.error('HWINFO exception: %s' %e.__class__.__name__)
+                log.debug('%s' %e, exc_info=e)
             else:
                 log.error('HWINFO failed execution with output: ' + str(hwinfo_errors))
         # TODO verify it returns a string object
@@ -118,7 +126,7 @@ class HWMDRetrieval:
     def get_smart_data(log):
         """Get smart data of disk using smartctl command."""
         # TODO validate if get NAME or KNAME of disks
-        cmd_lsblk = ["lsblk -Jdo KNAME,TYPE"]
+        cmd_lsblk = ['lsblk -Jdo KNAME,TYPE']
         proc = subprocess.Popen(cmd_lsblk, shell=True, stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
         output_lsblk, errors_lsblk = proc.communicate()
         proc.wait()
@@ -126,13 +134,14 @@ class HWMDRetrieval:
         try:
             disk_info = json.loads(output_lsblk.decode('utf8'))
         except Exception as e:
-            log.error('SMART exception:', exc_info=e)
+            log.error('SMART exception: %s' %e.__class__.__name__)
+            log.debug('%s' %e, exc_info=e)
 
         smart_data = []
         if proc.returncode == 0:
             for disk in disk_info['blockdevices']:
                 if disk['type'] == 'disk':
-                    smart_cmd = ["smartctl -x --json=csv /dev/" + disk['kname']]
+                    smart_cmd = ['smartctl -x --json=csv /dev/' + disk['kname']]
                     proc_smart = subprocess.Popen(smart_cmd, shell=True, stdout=subprocess.PIPE,
                                                   stderr=subprocess.STDOUT)
                     smart_output, smart_errors = proc_smart.communicate()
@@ -144,7 +153,8 @@ class HWMDRetrieval:
                             disk_data = json.loads(smart_output.decode('utf8'))
                         except Exception as e:
                             smart_data.append(str(smart_output))
-                            log.error('SMART exception on ' + disk['kname'] , exc_info=e)
+                            log.error('SMART exception on ' + disk['kname'] + '%s' %e.__class__.__name__)
+                            log.debug('%s' %e, exc_info=e)
                         else:
                             smart_data.append(disk_data)
                             log.info('SMART on ' + disk['kname'] + ' successfully completed.')
