@@ -196,12 +196,12 @@ create_persistence_partition() {
     cat > "${tmp_rw_mount}/hwmd_settings/settings.ini" <<END
 [settings]
 
-VERSION = 
+DH_TOKEN =
+DH_URL =
 
-DH_TOKEN = 
-DH_URL = 
-
-SNAPSHOT_PATH = /mnt
+SNAPSHOTS_PATH = /mnt
+LOGS_PATH = /mnt
+VERSION =
 END
     ${SUDO} umount "${tmp_rw_mount}"
 
@@ -262,13 +262,14 @@ dmesg -n 1 # Do not report *useless* system messages to the terminal
 python3 /opt/hwmd/hwmetadata_core.py
 stty echo
 END
+#TODO add some useful commands
 cat > "${HWMD_PATH}/chroot/root/.bash_history" <<END
-exit
+poweroff
 END
 
   # sequence of commands to install app in function run_chroot
   install_app_str="$(cat<<END
-echo 'Install Workbench requirements'
+echo 'Install HWMD requirements'
 
 # Install HWMD debian requirements
 apt-get install -y --no-install-recommends \
@@ -354,6 +355,9 @@ if [ -z "${DEBUG:-}" ]; then
   apt-get clean < /dev/null
 fi
 
+# cleanup bash history
+history -c
+
 CHROOT
 }
 
@@ -427,7 +431,7 @@ detect_user() {
     SUDO='sudo'
     # jump to current dir where the script is so relative links work
     cd "\$(dirname "\${0}")"
-    # workbench working directory to build the iso
+    # hwmd working directory to build the iso
     HWMD_PATH="iso"
   # detect pure root
   elif [ "\${userid}" = 0 ]; then
@@ -443,10 +447,10 @@ main() {
   if [ "${DEBUG:-}" ]; then
     HWMD_VERSION='debug'
   else
-    HWMD_VERSION='2022.12.0-beta'
+    HWMD_VERSION='2022.12.1-beta'
   fi
   iso_name="USODY_${HWMD_VERSION}"
-  hostname='hwmd-live'
+  hostname='hwmd-usb'
   root_passwd='workbench'
 
   eval "${detect_user_str}" && detect_user

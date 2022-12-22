@@ -13,6 +13,14 @@ and this project adheres to [Calendar Versioning](https://calver.org/#scheme) sc
 ----
 ## [Unreleased]
 
+## [2022.12.1-beta] - 2022/12/16
+_(dmidecode = 3.3 | smartmontools = 7.2 | hwinfo = 21.72 | lshw = 02.19 | lspci = 3.7.0)_
+- [added] log file feature (rel #4116)
+- [added] empty bash history on shell script (rel #4117)
+- [changed] snapshots path name
+- [fixed] logging error when sudo/root is required
+- [fixed] loging warning when No Internet (rel #4168)
+
 ## [2022.12.0-beta] - 2022/12/12
 _(dmidecode = 3.3 | smartmontools = 7.2 | hwinfo = 21.72 | lshw = 02.19 | lspci = 3.7.0)_
 - [added] snapshots_clean on Makefile
