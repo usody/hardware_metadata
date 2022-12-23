@@ -263,7 +263,7 @@ python3 /opt/hwmd/hwmetadata_core.py
 stty echo
 END
 #TODO add some useful commands
-cat > "${HWMD_PATH}/chroot/root/.bash_history" <<END
+  cat > "${HWMD_PATH}/chroot/root/.bash_history" <<END
 poweroff
 END
 
