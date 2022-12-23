@@ -4,7 +4,8 @@ from unittest.mock import patch
 from io import StringIO
 import unittest
 
-from workbench_core import WorkbenchCore
+from hwmetadata_core import HWMDCore
+from hwmetadata_utils import HWMDUtils
 
 
 def get_snapshot(file_name: str) -> dict:
@@ -13,22 +14,25 @@ def get_snapshot(file_name: str) -> dict:
         return json.load(file)
 
 
-class TestWorkbenchLite(unittest.TestCase):
-    workbench = WorkbenchCore()
+class TestHWMD(unittest.TestCase):
+    hwmd_core = HWMDCore()
 
     @patch('sys.stdout', new_callable=StringIO)
     def test_generate_snapshot__check_stdout(self, stdout):
         """
         Test to check if function generate snapshot works properly.
         """
-        snapshot = self.workbench.generate_snapshot()
-        expected_stdout = ['[INFO] Snapshot generated properly.']
-        self.assertEqual(stdout.getvalue().splitlines()[-1:], expected_stdout)
+        snapshot = self.hwmd_core.generate_snapshot()
+        expected_stdout = [' [INFO] Snapshot generated properly.']
+        self.assertEqual(stdout.getvalue(), expected_stdout)
 
     def test_post_snapshot__response_code_422(self):
         snapshot = get_snapshot('snapshot.empty')
-        r = self.workbench.post_snapshot(snapshot)
-        assert r['code'] == 422
+        r = self.hwmd_core.post_snapshot(snapshot)
+        if r:
+            assert r['code'] == 422
+        else:
+            assert r == False
 
     #TODO add more tests
 
