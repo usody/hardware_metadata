@@ -106,7 +106,7 @@ class HWMDCore:
                         self.log.warning('We could not auto-upload the device. {' + str(r['code']) + ' ' + str(r['type']) +'}')
                         self.log.debug(r['message'])
                     return response
-                except Exception as e:
+                except Exception as ex:
                     self.log.error('POST snapshot exception:%s' % ex)
                     self.log.debug('%s' % ex, exc_info=ex)
                     return False

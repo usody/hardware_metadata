@@ -5,21 +5,22 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/)
 and this project adheres to [Calendar Versioning](https://calver.org/#scheme) scheme (`YYYY.MM.PATCH`).
 
 ## prod
-[2022.5.1-beta]
+[2022.12.1-beta]
 
 ## preprod
-[2022.12.0-beta]
+[2022.12.1-beta]
 
 ----
 ## [Unreleased]
 
-## [2022.12.1-beta] - 2022/12/16
+## [2022.12.1-beta] - 2022/12/22
 _(dmidecode = 3.3 | smartmontools = 7.2 | hwinfo = 21.72 | lshw = 02.19 | lspci = 3.7.0)_
 - [added] log file feature (rel #4116)
 - [added] empty bash history on shell script (rel #4117)
 - [changed] snapshots path name
 - [fixed] logging error when sudo/root is required
 - [fixed] loging warning when No Internet (rel #4168)
+- [fixed] exception saving snapshot
 
 ## [2022.12.0-beta] - 2022/12/12
 _(dmidecode = 3.3 | smartmontools = 7.2 | hwinfo = 21.72 | lshw = 02.19 | lspci = 3.7.0)_
