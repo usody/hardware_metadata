@@ -21,19 +21,16 @@ class TestWorkbenchLite(unittest.TestCase):
         """
         Test to check if function generate snapshot works properly.
         """
-        self.workbench.generate_snapshot()
-        expected_stdout = 'Snapshot json saved!\n'
-        self.assertEqual(stdout.getvalue(), expected_stdout)
-
-    def test_post_snapshot__response_code_201(self):
-        snapshot = get_snapshot('snapshot.full')
-        r = self.workbench.post_snapshot(snapshot)
-        assert r['code'] == 201
+        snapshot = self.workbench.generate_snapshot()
+        expected_stdout = ['[INFO] Snapshot generated properly.']
+        self.assertEqual(stdout.getvalue().splitlines()[-1:], expected_stdout)
 
     def test_post_snapshot__response_code_422(self):
         snapshot = get_snapshot('snapshot.empty')
         r = self.workbench.post_snapshot(snapshot)
         assert r['code'] == 422
+
+    #TODO add more tests
 
 
 if __name__ == '__main__':

@@ -5,14 +5,60 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/)
 and this project adheres to [Calendar Versioning](https://calver.org/#scheme) scheme (`YYYY.MM.PATCH`).
 
 ## prod
-[2022.5.1-beta]
+[2022.12.1-beta]
 
 ## preprod
-[2022.10.1-beta]
+[2022.12.1-beta]
 
 ----
 ## [Unreleased]
-- [changed] improve the warning message when settings variables are missing or empty
+
+## [2022.12.1-beta] - 2022/12/22
+_(dmidecode = 3.3 | smartmontools = 7.2 | hwinfo = 21.72 | lshw = 02.19 | lspci = 3.7.0)_
+- [added] log file feature (rel #4116)
+- [added] empty bash history on shell script (rel #4117)
+- [changed] snapshots path name
+- [fixed] logging error when sudo/root is required
+- [fixed] loging warning when No Internet (rel #4168)
+- [fixed] exception saving snapshot
+
+## [2022.12.0-beta] - 2022/12/12
+_(dmidecode = 3.3 | smartmontools = 7.2 | hwinfo = 21.72 | lshw = 02.19 | lspci = 3.7.0)_
+- [added] snapshots_clean on Makefile
+- [changed] rename all code to Hardware Metadata
+- [changed] delete unnecessary files on .gitignore
+- [changed] update README.md accordingly to HWMD
+- [fixed] add pciutils on debian requirements file
+
+## [2022.11.3-beta] - 2022/11/28
+_(dmidecode = 3.3 | smartmontools = 7.2 | hwinfo = 21.72 | lshw = 02.19 | lspci = 3.7.0)_
+- [added] highlight the information displayed on screen (rel #3939)
+- [added] colorlog python module for display information
+- [added] HWMDLog class
+- [added] bash_history on build script
+- [removed] print function for display information
+
+## [2022.11.2-beta] - 2022/11/21
+_(dmidecode = 3.3 | smartmontools = 7.2 | hwinfo = 21.72 | lshw = 02.19 | lspci = 3.7.0)_
+- [fixed] hwinfo field in the snapshot when DISABLE_HWINFO is on 
+- [added] default settings.ini template in the build script (rel #4068)
+- [added] display DEVICE URL & SNAPSHOT on summary screen
+- [added] settings_version new variable in the snapshot (rel #3999)
+- [changed] create .profile file in the build scipt
+- [changed] improve the messages displayed when interacting with DH API
+
+## [2022.11.1-beta] - 2022/11/08
+_(dmidecode = 3.3 | smartmontools = 7.2 | hwinfo = 21.72 | lshw = 02.19 | lspci = 3.7.0)_
+- [added] display 'No Settings Version (NaN)' when version not defined
+- [changed] save snapshots on current dir if not defined on settings file (rel #4053)
+
+## [2022.11.0-beta] - 2022/11/08
+_(dmidecode = 3.3 | smartmontools = 7.2 | hwinfo = 21.72 | lshw = 02.19 | lspci = 3.7.0)_
+- [added] check for Internet connection and display message accordingly (rel #3653)
+- [added] new variable in the settings, VERSION (rel #3998)
+- [added] display the path and filename of the json (snapshot)
+- [changed] improve the warnings message
+- [changed] hardware data retrieval functions within a specific class
   
 
 ## [2022.10.1-beta] - 2022/10/26
