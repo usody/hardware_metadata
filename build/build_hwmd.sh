@@ -261,6 +261,8 @@ prepare_app() {
   cat > "${HWMD_PATH}/chroot/root/.profile" <<END
 stty -echo # Do not show what we type in terminal so it does not meddle with our nice output
 dmesg -n 1 # Do not report *useless* system messages to the terminal
+# clearly specify the right working directory, used in the python script as os.getcwd()
+cd /mnt
 python3 /opt/hwmd/hwmetadata_core.py
 stty echo
 END
