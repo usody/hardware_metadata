@@ -30,8 +30,10 @@ END
 
 create_iso() {
   # Copy kernel and initramfs
-  ${SUDO} cp ${HWMD_PATH}/chroot/boot/vmlinuz-* ${HWMD_PATH}/staging/live/vmlinuz
-  ${SUDO} cp ${HWMD_PATH}/chroot/boot/initrd.img-* ${HWMD_PATH}/staging/live/initrd
+  vmlinuz="$(ls -1v ${HWMD_PATH}/chroot/boot/vmlinuz-* | tail -n 1)"
+  initrd="$(ls -1v ${HWMD_PATH}/chroot/boot/initrd.img-* | tail -n 1)"
+  ${SUDO} cp ${vmlinuz} ${HWMD_PATH}/staging/live/vmlinuz
+  ${SUDO} cp ${initrd} ${HWMD_PATH}/staging/live/initrd
   # Creating ISO
   iso_path="${HWMD_PATH}/${iso_name}.iso"
 
