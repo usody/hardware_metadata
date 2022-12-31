@@ -194,7 +194,7 @@ create_persistence_partition() {
     ${SUDO} umount -f -l "${tmp_rw_mount}" >/dev/null 2>&1 || true
     mkdir -p "${tmp_rw_mount}"
     ${SUDO} mount "$(pwd)/${rw_img_path}" "${tmp_rw_mount}"
-    ${SUDO} mkdir -p "${tmp_rw_mount}/hwmd_settings"    
+    ${SUDO} mkdir -p "${tmp_rw_mount}/hwmd_settings"
     cat > "${tmp_rw_mount}/hwmd_settings/settings.ini" <<END
 [settings]
 
