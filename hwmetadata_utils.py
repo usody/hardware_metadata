@@ -10,7 +10,7 @@ class HWMDSettings:
     """Set of parameters to configure the correct working of the tool. """
 
     # Path where find settings.ini file
-    config = AutoConfig(search_path='/mnt/hwmd_settings/')
+    config = AutoConfig(search_path='/mnt/settings/')
 
     # Env variables for DH parameters
     DH_TOKEN = config('DH_TOKEN', default='', cast=str)

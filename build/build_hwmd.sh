@@ -194,8 +194,8 @@ create_persistence_partition() {
     ${SUDO} umount -f -l "${tmp_rw_mount}" >/dev/null 2>&1 || true
     mkdir -p "${tmp_rw_mount}"
     ${SUDO} mount "$(pwd)/${rw_img_path}" "${tmp_rw_mount}"
-    ${SUDO} mkdir -p "${tmp_rw_mount}/hwmd_settings"
-    cat > "${tmp_rw_mount}/hwmd_settings/settings.ini" <<END
+    ${SUDO} mkdir -p "${tmp_rw_mount}/settings"
+    cat > "${tmp_rw_mount}/settings/settings.ini" <<END
 [settings]
 
 DH_TOKEN =
@@ -451,7 +451,7 @@ main() {
   if [ "${DEBUG:-}" ]; then
     HWMD_VERSION='debug'
   else
-    HWMD_VERSION='2022.12.1-beta'
+    HWMD_VERSION='2022.12.2-beta'
   fi
   iso_name="USODY_${HWMD_VERSION}"
   hostname='hwmd-usb'

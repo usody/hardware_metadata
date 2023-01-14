@@ -29,7 +29,7 @@ class HWMDCore:
         
         self.type = 'Snapshot'
         self.software = 'Workbench'
-        self.version = '2022.12.1-beta'
+        self.version = '2022.12.2-beta'
         self.schema_api = '1.0.0'
 
         self.dh_url = HWMDSettings.DH_URL
