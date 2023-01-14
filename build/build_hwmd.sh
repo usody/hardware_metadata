@@ -30,8 +30,10 @@ END
 
 create_iso() {
   # Copy kernel and initramfs
-  ${SUDO} cp ${HWMD_PATH}/chroot/boot/vmlinuz-* ${HWMD_PATH}/staging/live/vmlinuz
-  ${SUDO} cp ${HWMD_PATH}/chroot/boot/initrd.img-* ${HWMD_PATH}/staging/live/initrd
+  vmlinuz="$(ls -1v ${HWMD_PATH}/chroot/boot/vmlinuz-* | tail -n 1)"
+  initrd="$(ls -1v ${HWMD_PATH}/chroot/boot/initrd.img-* | tail -n 1)"
+  ${SUDO} cp ${vmlinuz} ${HWMD_PATH}/staging/live/vmlinuz
+  ${SUDO} cp ${initrd} ${HWMD_PATH}/staging/live/initrd
   # Creating ISO
   iso_path="${HWMD_PATH}/${iso_name}.iso"
 
@@ -192,8 +194,8 @@ create_persistence_partition() {
     ${SUDO} umount -f -l "${tmp_rw_mount}" >/dev/null 2>&1 || true
     mkdir -p "${tmp_rw_mount}"
     ${SUDO} mount "$(pwd)/${rw_img_path}" "${tmp_rw_mount}"
-    ${SUDO} mkdir -p "${tmp_rw_mount}/hwmd_settings"    
-    cat > "${tmp_rw_mount}/hwmd_settings/settings.ini" <<END
+    ${SUDO} mkdir -p "${tmp_rw_mount}/settings"
+    cat > "${tmp_rw_mount}/settings/settings.ini" <<END
 [settings]
 
 DH_TOKEN =
@@ -259,6 +261,8 @@ prepare_app() {
   cat > "${HWMD_PATH}/chroot/root/.profile" <<END
 stty -echo # Do not show what we type in terminal so it does not meddle with our nice output
 dmesg -n 1 # Do not report *useless* system messages to the terminal
+# clearly specify the right working directory, used in the python script as os.getcwd()
+cd /mnt
 python3 /opt/hwmd/hwmetadata_core.py
 stty echo
 END
@@ -447,7 +451,7 @@ main() {
   if [ "${DEBUG:-}" ]; then
     HWMD_VERSION='debug'
   else
-    HWMD_VERSION='2022.12.1-beta'
+    HWMD_VERSION='2022.12.2-beta'
   fi
   iso_name="USODY_${HWMD_VERSION}"
   hostname='hwmd-usb'

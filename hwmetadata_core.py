@@ -29,7 +29,7 @@ class HWMDCore:
         
         self.type = 'Snapshot'
         self.software = 'Workbench'
-        self.version = '2022.12.1-beta'
+        self.version = '2022.12.2-beta'
         self.schema_api = '1.0.0'
 
         self.dh_url = HWMDSettings.DH_URL
@@ -92,29 +92,30 @@ class HWMDCore:
 
     def post_snapshot(self, snapshot):
         """ Upload snapshot to server."""
-        if self.hwmd_utils.internet(self.log):
-            if self.dh_url and self.dh_token:
-                post_headers = {'Authorization': 'Basic ' + self.dh_token, 'Content-type': 'application/json'}
+        self.hwmd_utils.internet(self.log)
+        if self.dh_url and self.dh_token:
+            post_headers = {'Authorization': 'Basic ' + self.dh_token, 'Content-type': 'application/json'}
 
-                try:
-                    response = requests.post(self.dh_url, headers=post_headers, data=json.dumps(snapshot))
-                    r = response.json()
-                    if response.status_code == 201:
-                        self.log.info('Snapshot JSON successfully uploaded.')
-                        self.hwmd_utils.print_dh_info(self, r)
-                    else:
-                        self.log.warning('We could not auto-upload the device. {' + str(r['code']) + ' ' + str(r['type']) +'}')
-                        self.log.debug(r['message'])
-                    return response
-                except Exception as ex:
-                    self.log.error('POST snapshot exception:%s' % ex)
-                    self.log.debug('%s' % ex, exc_info=ex)
-                    return False
-            else:
+            try:
+                response = requests.post(self.dh_url, headers=post_headers, data=json.dumps(snapshot))
+                r = response.json()
+                if response.status_code == 201:
+                    self.log.info('Snapshot JSON successfully uploaded.')
+                    self.hwmd_utils.print_dh_info(self, r)
+                else:
+                    self.log.warning('We could not auto-upload the device. {' + str(r['code']) + ' ' + str(r['type']) +'}')
+                    self.log.debug(r['message'])
+                return response
+            except Exception as ex:
                 self.log.warning('We could not auto-upload the device.')
-                self.log.warning('Settings URL or TOKEN are empty.')
                 self.log.warning('You can manually upload the snapshot.')
+                self.log.debug('POST snapshot exception: %s' % ex)
                 return False
+        else:
+            self.log.warning('We could not auto-upload the device.')
+            self.log.warning('Settings URL or TOKEN are empty.')
+            self.log.warning('You can manually upload the snapshot.')
+            return False
 
 
 if '__main__' == __name__:

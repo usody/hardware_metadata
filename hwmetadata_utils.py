@@ -10,7 +10,7 @@ class HWMDSettings:
     """Set of parameters to configure the correct working of the tool. """
 
     # Path where find settings.ini file
-    config = AutoConfig(search_path='/mnt/hwmd_settings/')
+    config = AutoConfig(search_path='/mnt/settings/')
 
     # Env variables for DH parameters
     DH_TOKEN = config('DH_TOKEN', default='', cast=str)
@@ -139,8 +139,6 @@ class HWMDUtils:
         try:
             socket.setdefaulttimeout(timeout)
             socket.socket(socket.AF_INET, socket.SOCK_STREAM).connect((host, port))
-            return True
         except socket.error as ex:
             log.warning('No Internet. %s' % ex)
             log.debug('%s' % ex, exc_info=ex)
-            return False

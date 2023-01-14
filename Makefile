@@ -58,3 +58,7 @@ boot_iso_uefi_secureboot:
 #remove snapshots folder
 snapshots_clean:
 	rm -rf snapshots/
+
+#remove logs folder
+logs_clean:
+	rm -rf logs/
