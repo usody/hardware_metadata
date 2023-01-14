@@ -5,13 +5,19 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/)
 and this project adheres to [Calendar Versioning](https://calver.org/#scheme) scheme (`YYYY.MM.PATCH`).
 
 ## prod
-[2022.12.1-beta]
+[2022.12.2-beta]
 
 ## preprod
-[2022.12.1-beta]
+[2022.12.2-beta]
 
 ----
 ## [Unreleased]
+
+## [2022.12.2-beta]
+_(dmidecode = 3.3 | smartmontools = 7.2 | hwinfo = 21.72 | lshw = 02.19 | lspci = 3.7.0)_
+- [added] increasing resilience when uploading snapshots
+- [changed] hwmd_settings folder name to settings (rel #4212)
+- [fixed] checking the Internet connection
 
 ## [2022.12.1-beta] - 2022/12/22
 _(dmidecode = 3.3 | smartmontools = 7.2 | hwinfo = 21.72 | lshw = 02.19 | lspci = 3.7.0)_
