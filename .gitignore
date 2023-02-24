@@ -2,8 +2,6 @@
 /snapshots
 # ignore logs folder
 /logs
-# ignore local generated files for iso build
-/build/iso
 # Byte-compiled / optimized / DLL files
 __pycache__/
 *.py[cod]
