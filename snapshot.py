@@ -1,11 +1,9 @@
 import json
 import os
-import uuid
-from datetime import datetime
-from pathlib import Path
-
 import requests
 import socket
+
+from pathlib import Path
 
 from hwmd import HWMD
 from settings import Settings
@@ -95,9 +93,10 @@ class Snapshot():
                 r = response.json()
                 if response.status_code == 201:
                     self.logs.info('Snapshot JSON successfully uploaded.')
+                    # Display on the screen relevant information about the DH
                     self.logs.log(70, '    %s' % r['dhid'])
                     self.logs.log(72, '   %s' % r['url'])
-                    self.logs.log(74, '   %s' % r['public_url'])      
+                    self.logs.log(74, '   %s' % r['public_url']) 
                 else:
                     self.logs.warning('We could not auto-upload the device. {' + str(r['code']) + ' ' + str(r['type']) +'}')
                     self.logs.debug(r['message'])

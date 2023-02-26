@@ -13,6 +13,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ----
 ## [Unreleased]
 
+## [1.0.0-beta]
+- [added] core.py file
+- [change] main.py file
+- [change] print functions
+- [remove] unnecessary imports
+
 ## [1.0.0-alpha]
 - [change] calver to semantic versioning
 - [change] python filenames
