@@ -17,7 +17,7 @@ In Debian 11 Bullseye following installation steps:
 
 .. code-block::
 
-    git clone https://github.com/usody/hardware-metadata.git
+    git clone https://github.com/usody/hardware_metadata.git
 
 2. Make sure we have all required packages installed, `debian packages <requirements.debian.txt>`_ and `python packages <requirements.txt>`_ . You can install all HWMD dependencies like the following way:
 
@@ -83,7 +83,7 @@ Run tests
 
 .. code-block::
 
-    git clone https://github.com/usody/hardware-metadata.git
+    git clone https://github.com/usody/hardware_metadata.git
 
 2. Execute on project folder:
 
