@@ -6,7 +6,7 @@ import socket
 from pathlib import Path
 
 from hwmd import HWMD
-from settings import Settings
+
 
 class Snapshot():
     """ Create a snapshot of your computer with hardware data and submit the information to a server.
@@ -21,15 +21,15 @@ class Snapshot():
         self.logs = logs
 
         self.type = 'Snapshot'
-        self.software = 'Workbench'
-        self.version = '2023.02.0-beta'
+        self.software = settings.SOFTWARE or 'Workbench'
+        self.version = settings.SOFTWARE_VERSION or '2023.02.0-beta'
         self.schema_api = '1.0.0'
 
         self.dh_url = settings.DH_URL
         self.dh_token = settings.DH_TOKEN
 
         self.snapshots_path = settings.SNAPSHOTS_PATH or os.getcwd()
-        self.settings_version = settings.VERSION or 'No Settings Version (NaN)'
+        self.settings_version = settings.SETTINGS_VERSION or 'No Settings Version (NaN)'
 
     def generate_snapshot(self):
         """ Getting hardware data and generate snapshot object."""

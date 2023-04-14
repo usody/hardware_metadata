@@ -16,4 +16,7 @@ class Settings:
     LOGS_PATH = config('LOGS_PATH', default='', cast=str)
 
     # Name of settings version
-    VERSION = config('VERSION', default='', cast=str)
+    SETTINGS_VERSION = config('SETTINGS_VERSION', default='', cast=str)
+
+    SOFTWARE = config('SOFTWARE', default='', cast=str)
+    SOFTWARE_VERSION = config('SOFTWARE_VERSION', default='', cast=str)
