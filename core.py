@@ -13,6 +13,10 @@ class Core:
     """
 
     def __init__(self):
+        if os.geteuid() != 0:
+            self.logs.error('Must be run as root / sudo.')
+            exit(1)
+
         self.settings = Settings()
         self.timestamp = datetime.now()
         # Generate SID as an alternative id to the DHID when no internet
@@ -20,10 +24,6 @@ class Core:
         self.sid = str(self.snapshot_uuid.time_mid).rjust(5, '0')
         self.logs = Logs.setup_logger(self.timestamp, self.sid)
         self.snapshot = Snapshot(self.timestamp, self.snapshot_uuid, self.sid, self.logs, self.settings)
-        
-        if os.geteuid() != 0:
-            self.logs.error('Must be run as root / sudo.')
-            exit(1)
 
     def print_snapshot_info(self):
         """Display on the screen relevant information about the tool."""
