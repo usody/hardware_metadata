@@ -13,7 +13,7 @@ class Snapshot():
         You must run this software as root / sudo.
     """
 
-    def __init__(self, timestamp, snapshot_uuid, sid, logs, settings):
+    def __init__(self, timestamp, snapshot_uuid, sid, software, software_version, logs, settings):
         self.timestamp = timestamp
         # Generate SID as an alternative id to the DHID when no internet
         self.snapshot_uuid = snapshot_uuid
@@ -21,8 +21,8 @@ class Snapshot():
         self.logs = logs
 
         self.type = 'Snapshot'
-        self.software = settings.SOFTWARE or 'Workbench'
-        self.version = settings.SOFTWARE_VERSION or '2023.02.0-beta'
+        self.software = software
+        self.software_version = software_version
         self.schema_api = '1.0.0'
 
         self.dh_url = settings.DH_URL
@@ -53,7 +53,7 @@ class Snapshot():
             'uuid': str(self.snapshot_uuid),
             'sid': self.sid,
             'software': self.software,
-            'version': self.version,
+            'version': self.software_version,
             'schema_api': self.schema_api,
             'settings_version': self.settings_version,
             #'hwmd': snapshot_data

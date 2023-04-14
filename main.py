@@ -2,7 +2,10 @@ from core import Core
 
 
 if '__main__' == __name__:
-    core = Core()
+    software = 'Workbench'
+    software_version = '2023.2.0-beta'
+
+    core = Core(software, software_version)
 
     print('------------------- [ STARTING ] -------------------')
 

@@ -12,7 +12,7 @@ class Core:
         You must run this software as root / sudo.
     """
 
-    def __init__(self):
+    def __init__(self, software, software_version):
         if os.geteuid() != 0:
             self.logs.error('Must be run as root / sudo.')
             exit(1)
@@ -23,11 +23,13 @@ class Core:
         self.snapshot_uuid = uuid.uuid4()
         self.sid = str(self.snapshot_uuid.time_mid).rjust(5, '0')
         self.logs = Logs.setup_logger(self.timestamp, self.sid)
-        self.snapshot = Snapshot(self.timestamp, self.snapshot_uuid, self.sid, self.logs, self.settings)
+        self.software = software
+        self.software_version = software_version
+        self.snapshot = Snapshot(self.timestamp, self.snapshot_uuid, self.software, self.software_version, self.sid, self.logs, self.settings)
 
     def print_snapshot_info(self):
         """Display on the screen relevant information about the tool."""
-        self.logs.log(60, '  %s' % self.snapshot.version)
+        self.logs.log(60, '  %s' % self.snapshot.software_version)
         self.logs.log(62, ' %s' % self.snapshot.settings_version)
         self.logs.log(64, '      %s' % self.snapshot.sid)
 
