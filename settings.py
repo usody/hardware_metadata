@@ -17,6 +17,3 @@ class Settings:
 
     # Name of settings version
     SETTINGS_VERSION = config('SETTINGS_VERSION', default='', cast=str)
-
-    SOFTWARE = config('SOFTWARE', default='', cast=str)
-    SOFTWARE_VERSION = config('SOFTWARE_VERSION', default='', cast=str)
