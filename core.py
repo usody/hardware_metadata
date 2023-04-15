@@ -2,9 +2,20 @@ import os
 import uuid
 from datetime import datetime
 
-from settings import Settings
-from logs import Logs
-from snapshot import Snapshot
+# Allow to use the code as a module
+try:
+    from settings import Settings
+    from logs import Logs
+    from snapshot import Snapshot
+except ModuleNotFoundError:
+    import sys
+    import pathlib
+    sys.path.append(
+        pathlib.Path(__file__).parent.parent.absolute().as_posix()
+    )
+    from hardware_metadata.settings import Settings
+    from hardware_metadata.logs import Logs
+    from hardware_metadata.snapshot import Snapshot
 
 
 class Core:
