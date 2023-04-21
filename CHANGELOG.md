@@ -13,11 +13,20 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ----
 ## [Unreleased]
 
+## [1.0.0-beta1] - 2023/04/21
+- [added] __init__.py file
+- [added] snapshot tests field
+- [change] snapshot data field
+- [change] rename hw_retrieval.py file
+- [change] software and software_version in Core class
+- [fixed] snapshot sid
+
 ## [1.0.0-beta]
 - [added] core.py file
 - [change] main.py file
 - [change] print functions
 - [remove] unnecessary imports
+
 
 ## [1.0.0-alpha]
 - [change] calver to semantic versioning
