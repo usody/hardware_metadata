@@ -14,6 +14,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ## [1.0.0-beta1] - 2023/04/21
+_(dmidecode = 3.3 | smartmontools = 7.2 | hwinfo = 21.72 | lshw = 02.19 | lspci = 3.7.0)_
 - [added] __init__.py file
 - [added] snapshot tests field
 - [change] snapshot data field
