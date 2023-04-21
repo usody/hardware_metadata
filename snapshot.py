@@ -40,18 +40,19 @@ class Snapshot():
 
     def generate_snapshot(self):
         """ Getting hardware data and generate snapshot object."""
-        snapshot_data = {}
-        snapshot_data.update({'lshw': HWMD.get_lshw_data(self.logs)})
-        snapshot_data.update({'dmidecode': HWMD.get_dmi_data(self.logs)})
-        snapshot_data.update({'lspci': HWMD.get_lspci_data(self.logs)})
+        hw_data = {}
+        hw_data.update({'lshw': HWMD.get_lshw_data(self.logs)})
+        hw_data.update({'dmidecode': HWMD.get_dmi_data(self.logs)})
+        hw_data.update({'lspci': HWMD.get_lspci_data(self.logs)})
         # 2022-9-8: hwinfo is slow, it is in the stage of deprecation and it is not tested
         #   hence, don't run hwinfo on test situation
         #   info: disabling it reduces the process time from 17 to 2 seconds
         if(not os.environ.get("DISABLE_HWINFO")):
-          snapshot_data.update({'hwinfo': HWMD.get_hwinfo_data(self.logs)})
+          hw_data.update({'hwinfo': HWMD.get_hwinfo_data(self.logs)})
         else:
-          snapshot_data.update({'hwinfo': ''})
-        snapshot_data.update({'smart': HWMD.get_smart_data(self.logs)})
+          hw_data.update({'hwinfo': ''})
+          
+        tests_data = {'smart': HWMD.get_smart_data(self.logs)}
 
         # Generate snapshot
         snapshot = {
@@ -63,8 +64,8 @@ class Snapshot():
             'version': self.software_version,
             'schema_api': self.schema_api,
             'settings_version': self.settings_version,
-            #'hwmd': snapshot_data
-            'data': snapshot_data
+            'hwmd': hw_data,
+            'tests': tests_data
         }
         self.logs.info('Snapshot generated properly.')
         return snapshot
