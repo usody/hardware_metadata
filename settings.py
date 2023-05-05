@@ -6,6 +6,9 @@ class Settings:
     # Path where find settings.ini file
     config = AutoConfig(search_path='/mnt/settings/')
 
+    # Name of settings version
+    SETTINGS_VERSION = config('SETTINGS_VERSION', default='', cast=str)
+
     # Env variables for DH parameters
     DH_TOKEN = config('DH_TOKEN', default='', cast=str)
     DH_URL = config('DH_URL', default='', cast=str)
@@ -14,9 +17,3 @@ class Settings:
     SNAPSHOTS_PATH = config('SNAPSHOTS_PATH', default='', cast=str)
     # Path where create logs folder
     LOGS_PATH = config('LOGS_PATH', default='', cast=str)
-
-    # Name of settings version
-    SETTINGS_VERSION = config('SETTINGS_VERSION', default='', cast=str)
-
-    # Name of erasure method
-    ERASURE_METHOD = config('ERASURE_METHOD', default='Basic', cast=str)
