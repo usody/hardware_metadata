@@ -7,27 +7,34 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ----
 ## [Unreleased]
 
-## [1.0.0-beta1]
+## [1.0.0-beta2] - 2023-05-05
+_(dmidecode = 3.3 | smartmontools = 7.2 | hwinfo = 21.72 | lshw = 02.19 | lspci = 3.7.0)_
+- [added] hwmd_version in snapshot 
+- [changed] settings file
+- [fixed] software_version var
+- [removed] ERASURE_METHOD settings var
+
+## [1.0.0-beta1] - 2023-04-21
 _(dmidecode = 3.3 | smartmontools = 7.2 | hwinfo = 21.72 | lshw = 02.19 | lspci = 3.7.0)_
 - [added] \_\_init\_\_.py file
 - [added] snapshot tests field
-- [change] snapshot data field
-- [change] rename hw_retrieval.py file
-- [change] software and software_version in Core class
+- [changed] snapshot data field
+- [changed] rename hw_retrieval.py file
+- [changed] software and software_version in Core class
 - [fixed] snapshot sid
 
 ## [1.0.0-beta]
 - [added] core.py file
-- [change] main.py file
-- [change] print functions
-- [remove] unnecessary imports
+- [changed] main.py file
+- [changed] print functions
+- [removed] unnecessary imports
 
 
 ## [1.0.0-alpha]
-- [change] calver to semantic versioning
-- [change] python filenames
-- [remove] build shell script
-- [remove] Makefile build and boot commands
+- [changed] calver to semantic versioning
+- [changed] python filenames
+- [removed] build shell script
+- [removed] Makefile build and boot commands
 
 ## [2022.12.2-beta]
 _(dmidecode = 3.3 | smartmontools = 7.2 | hwinfo = 21.72 | lshw = 02.19 | lspci = 3.7.0)_
