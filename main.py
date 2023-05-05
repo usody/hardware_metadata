@@ -3,7 +3,7 @@ from core import Core
 
 if '__main__' == __name__:
     software = 'Workbench'
-    software_version = '2023.2.0-beta'
+    software_version = '1.0.0-beta2'
 
     core = Core(software, software_version)
 
