@@ -5,7 +5,15 @@ import logging
 from pathlib import Path
 from colorlog import ColoredFormatter
 
-from settings import Settings
+try:
+    from settings import Settings
+except ModuleNotFoundError:
+    import sys
+    import pathlib
+    sys.path.append(
+        pathlib.Path(__file__).parent.parent.absolute().as_posix()
+    )
+    from hardware_metadata.settings import Settings
 
 
 class Logs:

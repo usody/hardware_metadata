@@ -2,9 +2,20 @@ import os
 import uuid
 from datetime import datetime
 
-from settings import Settings
-from logs import Logs
-from snapshot import Snapshot
+# Allow to use the code as a module
+try:
+    from settings import Settings
+    from logs import Logs
+    from snapshot import Snapshot
+except ModuleNotFoundError:
+    import sys
+    import pathlib
+    sys.path.append(
+        pathlib.Path(__file__).parent.parent.absolute().as_posix()
+    )
+    from hardware_metadata.settings import Settings
+    from hardware_metadata.logs import Logs
+    from hardware_metadata.snapshot import Snapshot
 
 
 class Core:
@@ -25,7 +36,7 @@ class Core:
         self.logs = Logs.setup_logger(self.timestamp, self.sid)
         self.software = software
         self.software_version = software_version
-        self.snapshot = Snapshot(self.timestamp, self.snapshot_uuid, self.software, self.software_version, self.sid, self.logs, self.settings)
+        self.snapshot = Snapshot(self.timestamp, self.snapshot_uuid, self.sid, self.software, self.software_version, self.logs, self.settings)
 
     def print_snapshot_info(self):
         """Display on the screen relevant information about the tool."""

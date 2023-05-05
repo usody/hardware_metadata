@@ -17,3 +17,6 @@ class Settings:
 
     # Name of settings version
     SETTINGS_VERSION = config('SETTINGS_VERSION', default='', cast=str)
+
+    # Name of erasure method
+    ERASURE_METHOD = config('ERASURE_METHOD', default='Basic', cast=str)
